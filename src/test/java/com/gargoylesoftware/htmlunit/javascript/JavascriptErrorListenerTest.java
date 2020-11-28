@@ -25,9 +25,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import com.gargoylesoftware.htmlunit.BrowserRunner;
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.MockWebConnection;
-import com.gargoylesoftware.htmlunit.ScriptException;
+import com.gargoylesoftware.htmlunit.exception.ScriptException;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebServerTestCase;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
@@ -115,7 +115,7 @@ public class JavascriptErrorListenerTest extends WebServerTestCase {
         loadPage(html);
 
         assertEquals("", javaScriptErrorListener.getWarnings());
-        assertEquals("com.gargoylesoftware.htmlunit.ScriptException: "
+        assertEquals("com.gargoylesoftware.htmlunit.exception.ScriptException: "
                 + "ReferenceError: \"unknown\" is not defined. "
                 + "(script in http://localhost:" + PORT + "/ from (1, 58) to (1, 81)#1)",
                 javaScriptErrorListener.getScriptExceptions());
@@ -151,7 +151,7 @@ public class JavascriptErrorListenerTest extends WebServerTestCase {
 
         assertEquals("", javaScriptErrorListener.getScriptExceptions());
         assertEquals(URL_FIRST + "notExisting.js, "
-                + "com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException: "
+                + "com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException: "
                 + "500 Server Error for " + URL_FIRST + "notExisting.js",
                 javaScriptErrorListener.getLoadScriptErrors());
         assertEquals("", javaScriptErrorListener.getMalformedScriptURLErrors());

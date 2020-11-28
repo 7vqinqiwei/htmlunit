@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 
+import com.gargoylesoftware.htmlunit.exception.ScriptException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

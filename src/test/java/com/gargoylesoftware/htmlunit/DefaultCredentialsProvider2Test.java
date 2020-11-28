@@ -20,6 +20,7 @@ import static org.junit.Assert.fail;
 import java.io.StringWriter;
 import java.net.URL;
 
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

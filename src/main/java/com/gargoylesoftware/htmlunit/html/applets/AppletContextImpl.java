@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 
-import com.gargoylesoftware.htmlunit.NotYetImplementedException;
+import com.gargoylesoftware.htmlunit.exception.NotYetImplementedException;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.javascript.host.Window;
 

@@ -12,12 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.gargoylesoftware.htmlunit;
+package com.gargoylesoftware.htmlunit.exception;
 
 /**
  * Thrown if a method is not yet implemented for some reason
  * but at least available from js.
- *
+ * 方法未被实现类实现异常
  * @author Ronald Brill
  */
 public class NotYetImplementedException extends RuntimeException {

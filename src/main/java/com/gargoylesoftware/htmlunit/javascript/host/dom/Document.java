@@ -68,7 +68,7 @@ import org.w3c.dom.ProcessingInstruction;
 
 import com.gargoylesoftware.css.parser.CSSException;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.exception.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.HttpHeader;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SgmlPage;

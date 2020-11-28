@@ -57,6 +57,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import com.gargoylesoftware.htmlunit.consts.WindowTarget;
+import com.gargoylesoftware.htmlunit.exception.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.exception.ScriptException;
+import com.gargoylesoftware.htmlunit.exception.WebWindowNotFoundException;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -154,12 +159,11 @@ import net.sourceforge.htmlunit.corejs.javascript.ScriptableObject;
 public class WebClient implements Serializable, AutoCloseable {
 
     /** Logging support. */
-    private static final Log LOG = LogFactory.getLog(WebClient.class);
+    private static final Log log = LogFactory.getLog(WebClient.class);
 
     /** Like the Firefox default value for {@code network.http.redirection-limit}. */
     private static final int ALLOWED_REDIRECTIONS_SAME_URL = 20;
-    private static final WebResponseData RESPONSE_DATA_NO_HTTP_RESPONSE = new WebResponseData(
-            0, "No HTTP Response", Collections.<NameValuePair>emptyList());
+    private static final WebResponseData RESPONSE_DATA_NO_HTTP_RESPONSE = new WebResponseData(0, "No HTTP Response", new ArrayList<>());
 
     private transient WebConnection webConnection_;
     private CredentialsProvider credentialsProvider_ = new DefaultCredentialsProvider();
@@ -197,21 +201,9 @@ public class WebClient implements Serializable, AutoCloseable {
     private OnbeforeunloadHandler onbeforeunloadHandler_;
     private Cache cache_ = new Cache();
 
-    /** target "_blank". */
-    private static final String TARGET_BLANK = "_blank";
-    /** target "_parent". */
-    private static final String TARGET_SELF = "_self";
-    /** target "_parent". */
-    private static final String TARGET_PARENT = "_parent";
-    /** target "_top". */
-    private static final String TARGET_TOP = "_top";
 
-    /** "about:". */
-    public static final String ABOUT_SCHEME = "about:";
-    /** "about:blank". */
-    public static final String ABOUT_BLANK = ABOUT_SCHEME + "blank";
     /** URL for "about:blank". */
-    public static final URL URL_ABOUT_BLANK = UrlUtils.toUrlSafe(ABOUT_BLANK);
+    public static final URL URL_ABOUT_BLANK = UrlUtils.toUrlSafe(WindowTarget.ABOUT_BLANK);
 
     private ScriptPreProcessor scriptPreProcessor_;
 
@@ -318,7 +310,7 @@ public class WebClient implements Serializable, AutoCloseable {
             msxmlActiveXObjectFactory_.init(getBrowserVersion());
         }
         catch (final Exception e) {
-            LOG.error("Exception while initializing MSXML ActiveX for the page", e);
+            log.error("Exception while initializing MSXML ActiveX for the page", e);
             throw new ScriptException(null, e); // BUG: null is not useful.
         }
     }
@@ -422,16 +414,16 @@ public class WebClient implements Serializable, AutoCloseable {
             if (page.isHtmlPage()) {
                 final HtmlPage htmlPage = (HtmlPage) page;
                 if (!htmlPage.isOnbeforeunloadAccepted()) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("The registered OnbeforeunloadHandler rejected to load a new page.");
+                    if (log.isDebugEnabled()) {
+                        log.debug("The registered OnbeforeunloadHandler rejected to load a new page.");
                     }
                     return (P) page;
                 }
             }
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Get page for window named '" + webWindow.getName() + "', using " + webRequest);
+        if (log.isDebugEnabled()) {
+            log.debug("Get page for window named '" + webWindow.getName() + "', using " + webRequest);
         }
 
         WebResponse webResponse;
@@ -486,7 +478,7 @@ public class WebClient implements Serializable, AutoCloseable {
     @SuppressWarnings("unchecked")
     public <P extends Page> P getPage(final WebWindow opener, final String target, final WebRequest params)
         throws FailingHttpStatusCodeException, IOException {
-        return (P) getPage(openTargetWindow(opener, target, TARGET_SELF), params);
+        return (P) getPage(openTargetWindow(opener, target, WindowTarget.TARGET_SELF), params);
     }
 
     /**
@@ -610,8 +602,8 @@ public class WebClient implements Serializable, AutoCloseable {
                             Optional.of(URI.parseURI(origin.toExternalForm()).orElse(null)))) {
                         pageDenied = PageDenied.BY_CONTENT_SECURIRY_POLICY;
 
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn("Load denied by Content-Security-Policy: '" + contentSecurityPolicy + "' - "
+                        if (log.isWarnEnabled()) {
+                            log.warn("Load denied by Content-Security-Policy: '" + contentSecurityPolicy + "' - "
                                     + webResponse.getWebRequest().getUrl() + "' does not permit framing.");
                         }
                     }
@@ -622,8 +614,8 @@ public class WebClient implements Serializable, AutoCloseable {
                     if ("DENY".equalsIgnoreCase(xFrameOptions)) {
                         pageDenied = PageDenied.BY_X_FRAME_OPTIONS;
 
-                        if (LOG.isWarnEnabled()) {
-                            LOG.warn("Load denied by X-Frame-Options: DENY; - '"
+                        if (log.isWarnEnabled()) {
+                            log.warn("Load denied by X-Frame-Options: DENY; - '"
                                     + webResponse.getWebRequest().getUrl() + "' does not permit framing.");
                         }
                     }
@@ -659,8 +651,8 @@ public class WebClient implements Serializable, AutoCloseable {
                         final FrameWindow fw = (FrameWindow) webWindow;
                         final BaseFrameElement frame = fw.getFrameElement();
                         if (frame.hasEventHandlers("onload")) {
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("Executing onload handler for " + frame);
+                            if (log.isDebugEnabled()) {
+                                log.debug("Executing onload handler for " + frame);
                             }
                             final Event event = new Event(frame, Event.TYPE_LOAD);
                             ((Node) frame.getScriptableObject()).executeEventLocally(event);
@@ -684,10 +676,10 @@ public class WebClient implements Serializable, AutoCloseable {
         if (getOptions().isPrintContentOnFailingStatusCode()) {
             final int statusCode = webResponse.getStatusCode();
             final boolean successful = statusCode >= HttpStatus.SC_OK && statusCode < HttpStatus.SC_MULTIPLE_CHOICES;
-            if (!successful && LOG.isInfoEnabled()) {
+            if (!successful && log.isInfoEnabled()) {
                 final String contentType = webResponse.getContentType();
-                LOG.info("statusCode=[" + statusCode + "] contentType=[" + contentType + "]");
-                LOG.info(webResponse.getContentAsString());
+                log.info("statusCode=[" + statusCode + "] contentType=[" + contentType + "]");
+                log.info(webResponse.getContentAsString());
             }
         }
     }
@@ -1010,7 +1002,7 @@ public class WebClient implements Serializable, AutoCloseable {
      * @return the new window
      */
     public WebWindow openWindow(final URL url, final String windowName, final WebWindow opener) {
-        final WebWindow window = openTargetWindow(opener, windowName, TARGET_BLANK);
+        final WebWindow window = openTargetWindow(opener, windowName, WindowTarget.TARGET_BLANK);
         if (url == null) {
             initializeEmptyWindow(window, window.getEnclosedPage());
         }
@@ -1030,7 +1022,7 @@ public class WebClient implements Serializable, AutoCloseable {
                 getPage(window, request);
             }
             catch (final IOException e) {
-                LOG.error("Error loading content into window", e);
+                log.error("Error loading content into window", e);
             }
         }
         return window;
@@ -1049,8 +1041,7 @@ public class WebClient implements Serializable, AutoCloseable {
      * @param defaultName the default target if no name is given
      * @return the new window
      */
-    public WebWindow openTargetWindow(
-            final WebWindow opener, final String windowName, final String defaultName) {
+    public WebWindow openTargetWindow(final WebWindow opener, final String windowName, final String defaultName) {
 
         WebAssert.notNull("opener", opener);
         WebAssert.notNull("defaultName", defaultName);
@@ -1063,7 +1054,7 @@ public class WebClient implements Serializable, AutoCloseable {
         WebWindow webWindow = resolveWindow(opener, windowToOpen);
 
         if (webWindow == null) {
-            if (TARGET_BLANK.equals(windowToOpen)) {
+            if (WindowTarget.TARGET_BLANK.equals(windowToOpen)) {
                 windowToOpen = "";
             }
             webWindow = new TopLevelWindow(windowToOpen, this);
@@ -1078,19 +1069,19 @@ public class WebClient implements Serializable, AutoCloseable {
     }
 
     private WebWindow resolveWindow(final WebWindow opener, final String name) {
-        if (name == null || name.isEmpty() || TARGET_SELF.equals(name)) {
+        if (name == null || name.isEmpty() || WindowTarget.TARGET_SELF.equals(name)) {
             return opener;
         }
 
-        if (TARGET_PARENT.equals(name)) {
+        if (WindowTarget.TARGET_PARENT.equals(name)) {
             return opener.getParentWindow();
         }
 
-        if (TARGET_TOP.equals(name)) {
+        if (WindowTarget.TARGET_TOP.equals(name)) {
             return opener.getTopWindow();
         }
 
-        if (TARGET_BLANK.equals(name)) {
+        if (WindowTarget.TARGET_BLANK.equals(name)) {
             return null;
         }
 
@@ -1304,7 +1295,7 @@ public class WebClient implements Serializable, AutoCloseable {
     private static WebResponse makeWebResponseForAboutUrl(final WebRequest webRequest) throws MalformedURLException {
         final URL url = webRequest.getUrl();
         final String urlWithoutQuery = StringUtils.substringBefore(url.toExternalForm(), "?");
-        if (!"blank".equalsIgnoreCase(StringUtils.substringAfter(urlWithoutQuery, WebClient.ABOUT_SCHEME))) {
+        if (!"blank".equalsIgnoreCase(StringUtils.substringAfter(urlWithoutQuery, WindowTarget.ABOUT_SCHEME))) {
             throw new MalformedURLException(url + " is not supported, only about:blank is supported now.");
         }
         return new StringWebResponse("", URL_ABOUT_BLANK);
@@ -1314,8 +1305,8 @@ public class WebClient implements Serializable, AutoCloseable {
      * Builds a WebResponse for a file URL.
      * This first implementation is basic.
      * It assumes that the file contains an HTML page encoded with the specified encoding.
-     * @param url the file URL
-     * @param charset encoding to use
+     * @param -- url the file URL
+     * @param -- charset encoding to use
      * @return the web response
      * @throws IOException if an IO problem occurs
      */
@@ -1474,8 +1465,8 @@ public class WebClient implements Serializable, AutoCloseable {
                                         webRequest.getCharset());
         webRequest.setUrl(url);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Load response for " + method + " " + url.toExternalForm());
+        if (log.isDebugEnabled()) {
+            log.debug("Load response for " + method + " " + url.toExternalForm());
         }
 
         // If the request settings don't specify a custom proxy, use the default client proxy...
@@ -1490,8 +1481,8 @@ public class WebClient implements Serializable, AutoCloseable {
                         proxyConfig.setProxyAutoConfigContent(content);
                     }
                     final String allValue = ProxyAutoConfig.evaluate(content, url);
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Proxy Auto-Config: value '" + allValue + "' for URL " + url);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Proxy Auto-Config: value '" + allValue + "' for URL " + url);
                     }
                     String value = allValue.split(";")[0].trim();
                     if (value.startsWith("PROXY")) {
@@ -1565,8 +1556,8 @@ public class WebClient implements Serializable, AutoCloseable {
                 return webResponse;
             }
 
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Got a redirect status code [" + status + "] new location = [" + locationString + "]");
+            if (log.isDebugEnabled()) {
+                log.debug("Got a redirect status code [" + status + "] new location = [" + locationString + "]");
             }
 
             if (allowedRedirects == 0) {
@@ -2087,7 +2078,7 @@ public class WebClient implements Serializable, AutoCloseable {
                     topWindow.close(true);
                 }
                 catch (final Exception e) {
-                    LOG.error("Exception while closing a topLevelWindow", e);
+                    log.error("Exception while closing a topLevelWindow", e);
                 }
             }
         }
@@ -2099,7 +2090,7 @@ public class WebClient implements Serializable, AutoCloseable {
                 scriptEngine_.shutdown();
             }
             catch (final Exception e) {
-                LOG.error("Exception while shutdown the scriptEngine", e);
+                log.error("Exception while shutdown the scriptEngine", e);
             }
         }
 
@@ -2107,7 +2098,7 @@ public class WebClient implements Serializable, AutoCloseable {
             webConnection_.close();
         }
         catch (final Exception e) {
-            LOG.error("Exception while closing the connection", e);
+            log.error("Exception while closing the connection", e);
         }
 
         synchronized (this) {
@@ -2116,7 +2107,7 @@ public class WebClient implements Serializable, AutoCloseable {
                     executor_.shutdownNow();
                 }
                 catch (final Exception e) {
-                    LOG.error("Exception while shutdown the executor service", e);
+                    log.error("Exception while shutdown the executor service", e);
                 }
             }
         }
@@ -2386,7 +2377,7 @@ public class WebClient implements Serializable, AutoCloseable {
                     response = loadWebResponse(request);
                 }
                 catch (final NoHttpResponseException e) {
-                    LOG.error("NoHttpResponseException while downloading; generating a NoHttpResponse", e);
+                    log.error("NoHttpResponseException while downloading; generating a NoHttpResponse", e);
                     response = new WebResponse(RESPONSE_DATA_NO_HTTP_RESPONSE, request, 0);
                 }
                 loadJob = new LoadJob(request, requestingWindow, target, response);
@@ -2425,16 +2416,16 @@ public class WebClient implements Serializable, AutoCloseable {
         for (int i = queue.size() - 1; i >= 0; --i) {
             final LoadJob loadJob = queue.get(i);
             if (loadJob.isOutdated()) {
-                if (LOG.isInfoEnabled()) {
-                    LOG.info("No usage of download: " + loadJob);
+                if (log.isInfoEnabled()) {
+                    log.info("No usage of download: " + loadJob);
                 }
                 continue;
             }
 
             final WebWindow window = resolveWindow(loadJob.requestingWindow_, loadJob.target_);
             if (updatedWindows.contains(window)) {
-                if (LOG.isInfoEnabled()) {
-                    LOG.info("No usage of download: " + loadJob);
+                if (log.isInfoEnabled()) {
+                    log.info("No usage of download: " + loadJob);
                 }
             }
             else {
@@ -2562,8 +2553,8 @@ public class WebClient implements Serializable, AutoCloseable {
     public void addCookie(final String cookieString, final URL pageUrl, final Object origin) {
         final CookieManager cookieManager = getCookieManager();
         if (!cookieManager.isCookiesEnabled()) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Skipped adding cookie: '" + cookieString
+            if (log.isDebugEnabled()) {
+                log.debug("Skipped adding cookie: '" + cookieString
                         + "' because cookies are not enabled for the CookieManager.");
             }
             return;
@@ -2583,14 +2574,14 @@ public class WebClient implements Serializable, AutoCloseable {
                 final Cookie htmlUnitCookie = new Cookie((ClientCookie) cookie);
                 cookieManager.addCookie(htmlUnitCookie);
 
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Added cookie: '" + cookieString + "'");
+                if (log.isDebugEnabled()) {
+                    log.debug("Added cookie: '" + cookieString + "'");
                 }
             }
         }
         catch (final MalformedCookieException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.warn("Adding cookie '" + cookieString + "' failed; reason: '" + e.getMessage() + "'.");
+            if (log.isDebugEnabled()) {
+                log.warn("Adding cookie '" + cookieString + "' failed; reason: '" + e.getMessage() + "'.");
             }
             getIncorrectnessListener().notify("Adding cookie '" + cookieString
                         + "' failed; reason: '" + e.getMessage() + "'.", origin);

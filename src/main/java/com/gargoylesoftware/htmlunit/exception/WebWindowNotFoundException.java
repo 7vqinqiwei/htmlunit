@@ -12,12 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.gargoylesoftware.htmlunit;
+package com.gargoylesoftware.htmlunit.exception;
+
+import com.gargoylesoftware.htmlunit.WebWindow;
 
 /**
  * Exception to indicate that no {@link WebWindow} could be found that matched
  * a given name.
- *
+ * 未知WebWindow异常
  * @author <a href="mailto:mbowler@GargoyleSoftware.com">Mike Bowler</a>
  */
 public class WebWindowNotFoundException extends RuntimeException {

@@ -12,13 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.gargoylesoftware.htmlunit;
+package com.gargoylesoftware.htmlunit.exception;
+
+import com.gargoylesoftware.htmlunit.WebResponse;
 
 import java.net.URL;
 
 /**
  * An exception that is thrown when the server returns a failing status code.
- *
+ * 失败请求异常
  * @author <a href="mailto:mbowler@GargoyleSoftware.com">Mike Bowler</a>
  * @author Marc Guillemot
  */

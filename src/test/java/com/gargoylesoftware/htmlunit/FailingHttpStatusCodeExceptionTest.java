@@ -19,6 +19,7 @@ import static org.junit.Assert.fail;
 import java.util.Collections;
 import java.util.List;
 
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.HttpStatus;
 import org.junit.Test;

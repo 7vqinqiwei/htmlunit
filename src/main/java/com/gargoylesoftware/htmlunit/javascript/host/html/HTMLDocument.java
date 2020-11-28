@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import com.gargoylesoftware.htmlunit.consts.WindowTarget;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -495,7 +496,7 @@ public class HTMLDocument extends Document {
         if (ww instanceof FrameWindow
                 && (!Undefined.isUndefined(url)
                         || getBrowserVersion().hasFeature(JS_DOCUMENT_OPEN_OVERWRITES_ABOUT_BLANK_LOCATION))
-                && WebClient.ABOUT_BLANK.equals(getPage().getUrl().toExternalForm())) {
+                && WindowTarget.ABOUT_BLANK.equals(getPage().getUrl().toExternalForm())) {
             final URL enclosingUrl = ((FrameWindow) ww).getEnclosingPage().getUrl();
             getPage().getWebResponse().getWebRequest().setUrl(enclosingUrl);
         }

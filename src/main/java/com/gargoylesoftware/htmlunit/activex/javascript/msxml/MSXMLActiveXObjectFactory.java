@@ -20,7 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.ScriptException;
+import com.gargoylesoftware.htmlunit.exception.ScriptException;
 import com.gargoylesoftware.htmlunit.WebWindow;
 
 import net.sourceforge.htmlunit.corejs.javascript.Scriptable;

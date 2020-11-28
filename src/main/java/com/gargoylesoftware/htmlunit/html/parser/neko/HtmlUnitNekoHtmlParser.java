@@ -39,7 +39,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import com.gargoylesoftware.htmlunit.ObjectInstantiationException;
+import com.gargoylesoftware.htmlunit.exception.ObjectInstantiationException;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SgmlPage;
 import com.gargoylesoftware.htmlunit.WebAssert;

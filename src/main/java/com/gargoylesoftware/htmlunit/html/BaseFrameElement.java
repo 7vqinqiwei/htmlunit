@@ -22,12 +22,13 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
 
+import com.gargoylesoftware.htmlunit.consts.WindowTarget;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Attr;
 
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.FrameContentHandler;
 import com.gargoylesoftware.htmlunit.HttpHeader;
 import com.gargoylesoftware.htmlunit.Page;
@@ -80,7 +81,7 @@ public abstract class BaseFrameElement extends HtmlElement {
             // if created by the HTMLParser the src attribute is not set via setAttribute() or some other method but is
             // part of the given attributes already.
             final String src = getSrcAttribute();
-            if (src != ATTRIBUTE_NOT_DEFINED && !WebClient.ABOUT_BLANK.equals(src)) {
+            if (src != ATTRIBUTE_NOT_DEFINED && !WindowTarget.ABOUT_BLANK.equals(src)) {
                 loadSrcWhenAddedToPage_ = true;
             }
         }
@@ -117,8 +118,8 @@ public abstract class BaseFrameElement extends HtmlElement {
 
     public void loadInnerPage() throws FailingHttpStatusCodeException {
         String source = getSrcAttribute();
-        if (source.isEmpty() || StringUtils.startsWithIgnoreCase(source, WebClient.ABOUT_SCHEME)) {
-            source = WebClient.ABOUT_BLANK;
+        if (source.isEmpty() || StringUtils.startsWithIgnoreCase(source, WindowTarget.ABOUT_SCHEME)) {
+            source = WindowTarget.ABOUT_BLANK;
         }
 
         loadInnerPageIfPossible(source);
@@ -164,7 +165,7 @@ public abstract class BaseFrameElement extends HtmlElement {
 
     /**
      * @throws FailingHttpStatusCodeException if the server returns a failing status code AND the property
-     *      {@link WebClient#setThrowExceptionOnFailingStatusCode(boolean)} is set to true
+     *      {@link WebClient#-- setThrowExceptionOnFailingStatusCode(boolean)} is set to true
      */
     private void loadInnerPageIfPossible(final String src) throws FailingHttpStatusCodeException {
         setContentLoaded();
@@ -173,7 +174,7 @@ public abstract class BaseFrameElement extends HtmlElement {
         final WebClient webClient = getPage().getWebClient();
         final FrameContentHandler handler = webClient.getFrameContentHandler();
         if (null != handler && !handler.loadFrameDocument(this)) {
-            source = WebClient.ABOUT_BLANK;
+            source = WindowTarget.ABOUT_BLANK;
         }
 
         if (!source.isEmpty()) {
@@ -387,7 +388,7 @@ public abstract class BaseFrameElement extends HtmlElement {
 
         // do not use equals() here
         // see HTMLIFrameElement2Test.documentCreateElement_onLoad_srcAboutBlank()
-        if (SRC_ATTRIBUTE.equals(qualifiedName) && WebClient.ABOUT_BLANK != attributeValue) {
+        if (SRC_ATTRIBUTE.equals(qualifiedName) && WindowTarget.ABOUT_BLANK != attributeValue) {
             if (isAttachedToPage()) {
                 loadSrc();
             }
@@ -410,7 +411,7 @@ public abstract class BaseFrameElement extends HtmlElement {
 
         final Attr result = super.setAttributeNode(attribute);
 
-        if (SRC_ATTRIBUTE.equals(qualifiedName) && !WebClient.ABOUT_BLANK.equals(attributeValue)) {
+        if (SRC_ATTRIBUTE.equals(qualifiedName) && !WindowTarget.ABOUT_BLANK.equals(attributeValue)) {
             if (isAttachedToPage()) {
                 loadSrc();
             }

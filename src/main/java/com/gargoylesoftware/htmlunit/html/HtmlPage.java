@@ -63,8 +63,8 @@ import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.ranges.Range;
 
 import com.gargoylesoftware.htmlunit.Cache;
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.exception.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.History;
 import com.gargoylesoftware.htmlunit.HttpHeader;
 import com.gargoylesoftware.htmlunit.OnbeforeunloadHandler;

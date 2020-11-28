@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.CDATASection;
 import org.w3c.dom.Node;
 
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.exception.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.SgmlPage;
 import com.gargoylesoftware.htmlunit.StringWebResponse;
 import com.gargoylesoftware.htmlunit.WebRequest;

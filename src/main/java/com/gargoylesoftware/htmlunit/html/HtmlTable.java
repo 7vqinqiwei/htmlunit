@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.exception.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.SgmlPage;
 
 /**

@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.gargoylesoftware.htmlunit.consts.WindowTarget;
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -2495,7 +2497,7 @@ public class WebClientTest extends SimpleWebTestCase {
 
         final WebRequest firstRequest1 = firstWindow.getEnclosedPage().getWebResponse().getWebRequest();
         assertEquals("about:blank", firstRequest1.getUrl().toExternalForm());
-        firstRequest1.setUrl(UrlUtils.toUrlSafe(WebClient.ABOUT_BLANK + "#anchor"));
+        firstRequest1.setUrl(UrlUtils.toUrlSafe(WindowTarget.ABOUT_BLANK + "#anchor"));
 
         final WebWindow secondWindow = webClient.openWindow(WebClient.URL_ABOUT_BLANK, "Window 2");
         assertNotNull(secondWindow);

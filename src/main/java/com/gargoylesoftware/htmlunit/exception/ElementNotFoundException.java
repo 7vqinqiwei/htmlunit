@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.gargoylesoftware.htmlunit;
+package com.gargoylesoftware.htmlunit.exception;
 
 /**
  * An exception that is thrown when a specified XML element cannot be found in the DOM model.
- *
+ * 在指定xml中未找到相关的Dom模型
  * @author <a href="mailto:mbowler@GargoyleSoftware.com">Mike Bowler</a>
  */
 public class ElementNotFoundException extends RuntimeException {

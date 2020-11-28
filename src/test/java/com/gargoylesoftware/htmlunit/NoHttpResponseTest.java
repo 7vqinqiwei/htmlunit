@@ -19,6 +19,7 @@ import static org.junit.Assert.fail;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;

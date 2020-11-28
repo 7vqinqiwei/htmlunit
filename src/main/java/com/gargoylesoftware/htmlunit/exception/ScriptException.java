@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.gargoylesoftware.htmlunit;
+package com.gargoylesoftware.htmlunit.exception;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,7 +32,7 @@ import net.sourceforge.htmlunit.corejs.javascript.WrappedException;
 /**
  * An exception that will be thrown if an error occurs during the processing of
  * a script.
- *
+ * 执行script异常
  * @author <a href="mailto:mbowler@GargoyleSoftware.com">Mike Bowler</a>
  * @author Marc Guillemot
  * @author Frank Danek

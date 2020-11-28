@@ -19,7 +19,7 @@ import java.applet.AppletStub;
 import java.net.URL;
 import java.util.HashMap;
 
-import com.gargoylesoftware.htmlunit.NotYetImplementedException;
+import com.gargoylesoftware.htmlunit.exception.NotYetImplementedException;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 /**

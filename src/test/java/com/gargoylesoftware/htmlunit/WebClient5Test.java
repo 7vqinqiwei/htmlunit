@@ -19,6 +19,7 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.net.URL;
 
+import com.gargoylesoftware.htmlunit.exception.FailingHttpStatusCodeException;
 import org.junit.Test;
 
 /**

@@ -20,6 +20,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import com.gargoylesoftware.htmlunit.exception.ObjectInstantiationException;
 import org.junit.Test;
 
 /**

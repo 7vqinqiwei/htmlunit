@@ -18,7 +18,7 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import com.gargoylesoftware.htmlunit.ScriptException;
+import com.gargoylesoftware.htmlunit.exception.ScriptException;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 /**

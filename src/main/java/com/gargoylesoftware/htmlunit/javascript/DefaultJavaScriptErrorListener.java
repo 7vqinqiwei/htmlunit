@@ -21,7 +21,7 @@ import java.net.URL;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.gargoylesoftware.htmlunit.ScriptException;
+import com.gargoylesoftware.htmlunit.exception.ScriptException;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 /**

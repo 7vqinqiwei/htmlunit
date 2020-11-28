@@ -17,7 +17,7 @@ package com.gargoylesoftware.htmlunit.html;
 import java.io.IOException;
 import java.util.Map;
 
-import com.gargoylesoftware.htmlunit.ElementNotFoundException;
+import com.gargoylesoftware.htmlunit.exception.ElementNotFoundException;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SgmlPage;
 import com.gargoylesoftware.htmlunit.javascript.host.event.Event;
