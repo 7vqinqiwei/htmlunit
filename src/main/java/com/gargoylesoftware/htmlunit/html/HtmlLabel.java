@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -107,17 +107,6 @@ public class HtmlLabel extends HtmlElement {
         if (element != null) {
             element.focus();
         }
-    }
-
-    /**
-     * Gets the element referenced by this label. That is the element in the page which id is
-     * equal to the value of the for attribute of this label.
-     * @return the element, {@code null} if not found
-     * @deprecated as of version 2.40; use {@link #getLabeledElement()} instead
-     */
-    @Deprecated
-    public HtmlElement getReferencedElement() {
-        return getLabeledElement();
     }
 
     /**

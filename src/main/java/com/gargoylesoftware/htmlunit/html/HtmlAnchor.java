@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -132,7 +132,7 @@ public class HtmlAnchor extends HtmlElement {
             }
 
             final String target;
-            if (shiftKey || ctrlKey) {
+            if (shiftKey || ctrlKey || ATTRIBUTE_NOT_DEFINED != getDownloadAttribute()) {
                 target = "_blank";
             }
             else {
@@ -168,7 +168,7 @@ public class HtmlAnchor extends HtmlElement {
         // use the page encoding even if this is a GET requests
         webRequest.setCharset(page.getCharset());
 
-        webRequest.setAdditionalHeader(HttpHeader.REFERER, page.getUrl().toExternalForm());
+        webRequest.setRefererlHeader(page.getUrl());
         if (LOG.isDebugEnabled()) {
             LOG.debug(
                     "Getting page for " + url.toExternalForm()
@@ -177,7 +177,7 @@ public class HtmlAnchor extends HtmlElement {
                     + page.getUrl());
         }
         final String target;
-        if (shiftKey || ctrlKey) {
+        if (shiftKey || ctrlKey || ATTRIBUTE_NOT_DEFINED != getDownloadAttribute()) {
             target = "_blank";
         }
         else {
@@ -427,4 +427,12 @@ public class HtmlAnchor extends HtmlElement {
         return getAttributeDirect("ping");
     }
 
+    /**
+     * Returns the value of the attribute {@code download}.
+     *
+     * @return the value of the attribute {@code download}
+     */
+    public final String getDownloadAttribute() {
+        return getAttributeDirect("download");
+    }
 }

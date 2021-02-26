@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,21 +45,22 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts({"1", "attrName attrValue", "attrValue", "null", "anotherValue",
                     "1", "4", "<span id='label'>changed</span>"})
     public void attributes() throws Exception {
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'foo.xml'") + ";\n"
             + "    var attributes = doc.documentElement.attributes;\n"
-            + "    alert(attributes.length);\n"
-            + "    alert(attributes[0].name + ' ' + attributes[0].value);\n"
+            + "    log(attributes.length);\n"
+            + "    log(attributes[0].name + ' ' + attributes[0].value);\n"
             + "    var root = doc.documentElement;\n"
-            + "    alert(root.getAttribute('attrName'));\n"
-            + "    alert(root.getAttribute('notExisting'));\n"
+            + "    log(root.getAttribute('attrName'));\n"
+            + "    log(root.getAttribute('notExisting'));\n"
             + "    root.setAttribute('attrName', 'anotherValue');\n"
-            + "    alert(root.getAttribute('attrName'));\n"
-            + "    alert(root.getElementsByTagName('book').length);\n"
+            + "    log(root.getAttribute('attrName'));\n"
+            + "    log(root.getElementsByTagName('book').length);\n"
             + "    var description = root.getElementsByTagName('description')[0];\n"
-            + "    alert(description.firstChild.nodeType);\n"
-            + "    alert(description.firstChild.nodeValue);\n"
+            + "    log(description.firstChild.nodeType);\n"
+            + "    log(description.firstChild.nodeValue);\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "</script></head><body onload='test()'>\n"
@@ -75,7 +76,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -84,14 +85,15 @@ public class ElementTest extends WebDriverTestCase {
     @Test
     @Alerts("exception")
     public void selectNodes() throws Exception {
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'" + URL_SECOND + "'") + ";\n"
             + "    try {\n"
             + "      var nodes = doc.documentElement.selectNodes('//title');\n"
-            + "      alert(nodes.length);\n"
-            + "      alert(nodes[0].tagName);\n"
-            + "    } catch (e) { alert('exception'); }\n"
+            + "      log(nodes.length);\n"
+            + "      log(nodes[0].tagName);\n"
+            + "    } catch (e) { log('exception'); }\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "</script></head><body onload='test()'>\n"
@@ -106,7 +108,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -118,13 +120,14 @@ public class ElementTest extends WebDriverTestCase {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
 
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'" + URL_SECOND + "'") + ";\n"
             + "    var parent = doc.documentElement.firstChild;\n"
-            + "    alert(parent.childNodes.length);\n"
+            + "    log(parent.childNodes.length);\n"
             + "    parent.removeChild(parent.firstChild);\n"
-            + "    alert(parent.childNodes.length);\n"
+            + "    log(parent.childNodes.length);\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "</script></head><body onload='test()'>\n"
@@ -133,7 +136,7 @@ public class ElementTest extends WebDriverTestCase {
         final String xml = "<books><book><title>Immortality</title><author>John Smith</author></book></books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -142,7 +145,8 @@ public class ElementTest extends WebDriverTestCase {
     @Test
     @Alerts({"lbl_SettingName", "outerHTML", "undefined"})
     public void getAttributeNode() throws Exception {
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'" + URL_SECOND + "'") + ";\n"
             + "    parseXML(doc);\n"
@@ -158,9 +162,9 @@ public class ElementTest extends WebDriverTestCase {
             + "              var node = elem.childNodes.item(j);\n"
             + "              if (node.nodeName == 'tag') {\n"
             + "                var type = node.getAttributeNode('type').value;\n"
-            + "                alert(target);\n"
-            + "                alert(type);\n"
-            + "                alert(node.text);\n"
+            + "                log(target);\n"
+            + "                log(type);\n"
+            + "                log(node.text);\n"
             + "                eval('document.all(\"' + target + '\").' + type + '=\"' + node.text + '\"');\n"
             + "              }\n"
             + "            }\n"
@@ -182,7 +186,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</responsexml>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -194,15 +198,16 @@ public class ElementTest extends WebDriverTestCase {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
 
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'" + URL_SECOND + "'") + ";\n"
             + "    var child = doc.documentElement.firstChild;\n"
-            + "    alert(child.tagName);\n"
+            + "    log(child.tagName);\n"
             + "    try {\n"
-            + "      alert(child.selectNodes('/title').length);\n"
-            + "      alert(child.selectNodes('title').length);\n"
-            + "    } catch (e) { alert('exception'); }\n"
+            + "      log(child.selectNodes('/title').length);\n"
+            + "      log(child.selectNodes('title').length);\n"
+            + "    } catch (e) { log('exception'); }\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "</script></head><body onload='test()'>\n"
@@ -211,7 +216,7 @@ public class ElementTest extends WebDriverTestCase {
         final String xml = "<books><book><title>Immortality</title><author>John Smith</author></book></books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -220,7 +225,8 @@ public class ElementTest extends WebDriverTestCase {
     @Test
     @Alerts({"1", "1"})
     public void getElementsByTagNameNS() throws Exception {
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var text='<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\\n';\n"
             + "    text += '<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://myNS\">\\n';\n"
@@ -233,15 +239,15 @@ public class ElementTest extends WebDriverTestCase {
             + "    text += '</xsl:stylesheet>';\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromString("text") + ";\n"
             + "    try {\n"
-            + "      alert(doc.documentElement.getElementsByTagNameNS('http://myNS', 'template').length);\n"
-            + "      alert(doc.documentElement.getElementsByTagNameNS(null, 'html').length);\n"
-            + "    } catch (e) { alert('exception'); }\n"
+            + "      log(doc.documentElement.getElementsByTagNameNS('http://myNS', 'template').length);\n"
+            + "      log(doc.documentElement.getElementsByTagNameNS(null, 'html').length);\n"
+            + "    } catch (e) { log('exception'); }\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_STRING_FUNCTION
             + "</script></head><body onload='test()'>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -250,7 +256,8 @@ public class ElementTest extends WebDriverTestCase {
     @Test
     @Alerts({"1", "2", "3"})
     public void getElementsByTagNameNSAsterisk() throws Exception {
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var text='<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\\n';\n"
             + "    text += '<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://myNS\">\\n';\n"
@@ -263,16 +270,70 @@ public class ElementTest extends WebDriverTestCase {
             + "    text += '</xsl:stylesheet>';\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromString("text") + ";\n"
             + "    try {\n"
-            + "      alert(doc.documentElement.getElementsByTagNameNS('http://myNS', '*').length);\n"
-            + "      alert(doc.documentElement.getElementsByTagNameNS(null, '*').length);\n"
-            + "      alert(doc.documentElement.getElementsByTagNameNS('*', '*').length);\n"
-            + "    } catch (e) { alert('exception'); }\n"
+            + "      log(doc.documentElement.getElementsByTagNameNS('http://myNS', '*').length);\n"
+            + "      log(doc.documentElement.getElementsByTagNameNS(null, '*').length);\n"
+            + "      log(doc.documentElement.getElementsByTagNameNS('*', '*').length);\n"
+            + "    } catch (e) { log('exception'); }\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_STRING_FUNCTION
             + "</script></head><body onload='test()'>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
+    }
+
+    /**
+     * @throws Exception if an error occurs
+     */
+    @Test
+    @Alerts(DEFAULT = {"2", "<nested>Three</nested>", "Four",
+                "1", "Two", "0", "0"},
+            IE = {"2", "undefined", "undefined",
+                    "1", "undefined", "0", "0"})
+    public void getElementsByTagNameXml() throws Exception {
+        final String html = "<html><head>\n"
+            + "<meta http-equiv='X-UA-Compatible' content='IE=edge'>\n"
+            + "</head><body>\n"
+            + "<script>\n"
+            + LOG_TITLE_FUNCTION
+            + "  var xmlString = [\n"
+            + "                 '<ResultSet>',\n"
+            + "                 '<Result>One</Result>',\n"
+            + "                 '<RESULT>Two</RESULT>',\n"
+            + "                 '<result><nested>Three</nested></result>',\n"
+            + "                 '<result>Four</result>',\n"
+            + "                 '</ResultSet>'\n"
+            + "                ].join('');\n"
+            + "  if (window.DOMParser) {\n"
+            + "    var parser = new DOMParser();\n"
+            + "    xml = parser.parseFromString(xmlString, 'text/xml');\n"
+            + "  } else { // IE\n"
+            + "    var parser = new ActiveXObject('Microsoft.XMLDOM');\n"
+            + "    parser.async = 'false';\n"
+            + "    parser.loadXML(xmlString);\n"
+            + "  }\n"
+            + "  var xmlDoc = parser.parseFromString(xmlString, 'text/xml');\n"
+            + "  var de = xmlDoc.documentElement;\n"
+            + "  try {\n"
+
+            + "    var res = de.getElementsByTagName('result');\n"
+            + "    log(res.length);\n"
+            + "    log(res[0].innerHTML);\n"
+            + "    log(res[1].innerHTML);\n"
+
+            + "    res = de.getElementsByTagName('RESULT');\n"
+            + "    log(res.length);\n"
+            + "    log(res[0].innerHTML);\n"
+
+            + "    res = de.getElementsByTagName('resulT');\n"
+            + "    log(res.length);\n"
+
+            + "    res = de.getElementsByTagName('rEsulT');\n"
+            + "    log(res.length);\n"
+            + "  } catch(e) {log('exception ' + e)}\n"
+            + "</script></body></html>";
+
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -281,11 +342,12 @@ public class ElementTest extends WebDriverTestCase {
     @Test
     @Alerts("false")
     public void hasAttribute() throws Exception {
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'foo.xml'") + ";\n"
-            + "    if (!doc.documentElement.hasAttribute) { alert('hasAttribute not available'); return }\n"
-            + "    alert(doc.documentElement.hasAttribute('something'));\n"
+            + "    if (!doc.documentElement.hasAttribute) { log('hasAttribute not available'); return }\n"
+            + "    log(doc.documentElement.hasAttribute('something'));\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "</script></head><body onload='test()'>\n"
@@ -300,7 +362,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -312,10 +374,11 @@ public class ElementTest extends WebDriverTestCase {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
 
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'foo.xml'") + ";\n"
-            + "    alert(doc.documentElement.attributes.getNamedItem('library') != undefined);\n"
+            + "    log(doc.documentElement.attributes.getNamedItem('library') != undefined);\n"
             + "  }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "</script></head><body onload='test()'>\n"
@@ -330,7 +393,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -339,18 +402,19 @@ public class ElementTest extends WebDriverTestCase {
     @Test
     @Alerts({"undefined", "undefined"})
     public void xml() throws Exception {
-        final String html = "<html><head><title>foo</title><script>\n"
+        final String html = "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "function test() {\n"
             + "  var text = '<a><b c=\"d\">e</b></a>';\n"
             + "  var doc = " + XMLDocumentTest.callLoadXMLDocumentFromString("text") + ";\n"
-            + "  alert(doc.xml);\n"
-            + "  alert(doc.documentElement.xml);\n"
+            + "  log(doc.xml);\n"
+            + "  log(doc.documentElement.xml);\n"
             + "}\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_STRING_FUNCTION
             + "</script></head><body onload='test()'>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -435,6 +499,7 @@ public class ElementTest extends WebDriverTestCase {
         final String html
             = "<html>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    debug(document.createElement('dIv'));\n"
             + "    debug(document.createElement('app:dIv'));\n"
@@ -443,16 +508,16 @@ public class ElementTest extends WebDriverTestCase {
             + "    debug(document.getElementById('dIv2'));\n"
             + "  }\n"
             + "  function debug(e) {\n"
-            + "    alert(e + ',' + e." + methodName + ");\n"
+            + "    log(e + ',' + e." + methodName + ");\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
             + "<body onload='test()'>\n"
             + "<dIv id='dIv1'></dIv>\n"
-            + "<app:dIv id='dIv2'>alert(2)</app:dIv>\n"
+            + "<app:dIv id='dIv2'>log(2)</app:dIv>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -465,8 +530,7 @@ public class ElementTest extends WebDriverTestCase {
                 "[object Element],app:dIv",
                 "[object HTMLDivElement],DIV",
                 "[object HTMLUnknownElement],APP:DIV",
-                "[object HTMLUnknownElement],ANOTHER:DIV"
-                })
+                "[object HTMLUnknownElement],ANOTHER:DIV"})
     public void namespace_nodeName() throws Exception {
         namespace("nodeName");
     }
@@ -481,8 +545,7 @@ public class ElementTest extends WebDriverTestCase {
                 "[object Element],app:dIv",
                 "[object HTMLDivElement],DIV",
                 "[object HTMLUnknownElement],APP:DIV",
-                "[object HTMLUnknownElement],ANOTHER:DIV"
-                })
+                "[object HTMLUnknownElement],ANOTHER:DIV"})
     public void namespace_tagName() throws Exception {
         namespace("tagName");
     }
@@ -497,8 +560,7 @@ public class ElementTest extends WebDriverTestCase {
                 "[object Element],app",
                 "[object HTMLDivElement],null",
                 "[object HTMLUnknownElement],null",
-                "[object HTMLUnknownElement],null"
-                })
+                "[object HTMLUnknownElement],null"})
     public void namespace_prefix() throws Exception {
         namespace("prefix");
     }
@@ -513,8 +575,7 @@ public class ElementTest extends WebDriverTestCase {
                 "[object Element],dIv",
                 "[object HTMLDivElement],div",
                 "[object HTMLUnknownElement],app:div",
-                "[object HTMLUnknownElement],another:div"
-                })
+                "[object HTMLUnknownElement],another:div"})
     public void namespace_localName() throws Exception {
         namespace("localName");
     }
@@ -529,8 +590,7 @@ public class ElementTest extends WebDriverTestCase {
                 "[object Element],http://www.appcelerator.org",
                 "[object HTMLDivElement],http://www.w3.org/1999/xhtml",
                 "[object HTMLUnknownElement],http://www.w3.org/1999/xhtml",
-                "[object HTMLUnknownElement],http://www.w3.org/1999/xhtml"
-                })
+                "[object HTMLUnknownElement],http://www.w3.org/1999/xhtml"})
     public void namespace_namespaceURI() throws Exception {
         namespace("namespaceURI");
     }
@@ -539,6 +599,7 @@ public class ElementTest extends WebDriverTestCase {
         final String html
             = "<html xmlns='http://www.w3.org/1999/xhtml' xmlns:app='http://www.appcelerator.org'>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    debug(document.createElement('dIv'));\n"
             + "    debug(document.createElement('app:dIv'));\n"
@@ -549,7 +610,7 @@ public class ElementTest extends WebDriverTestCase {
             + "    debug(document.getElementById('dIv3'));\n"
             + "  }\n"
             + "  function debug(e) {\n"
-            + "    alert(e + ',' + e." + methodName + ");\n"
+            + "    log(e + ',' + e." + methodName + ");\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
@@ -559,7 +620,7 @@ public class ElementTest extends WebDriverTestCase {
             + "<another:dIv id='dIv3'></another:dIv>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -569,8 +630,7 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts({"[object Element]", "dIv",
                 "[object HTMLHtmlElement]", "html",
                 "[object HTMLDivElement]", "div",
-                "[object HTMLUnknownElement]", "dIv"
-                })
+                "[object HTMLUnknownElement]", "dIv"})
     public void xml_nodeName() throws Exception {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
@@ -585,8 +645,7 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts({"[object Element]", "dIv",
                 "[object HTMLHtmlElement]", "html",
                 "[object HTMLDivElement]", "div",
-                "[object HTMLUnknownElement]", "dIv"
-                })
+                "[object HTMLUnknownElement]", "dIv"})
     public void xml_tagName() throws Exception {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
@@ -601,8 +660,7 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts({"[object Element]", "null",
                 "[object HTMLHtmlElement]", "null",
                 "[object HTMLDivElement]", "null",
-                "[object HTMLUnknownElement]", "null"
-                })
+                "[object HTMLUnknownElement]", "null"})
     public void xml_prefix() throws Exception {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
@@ -617,8 +675,7 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts({"[object Element]", "dIv",
                 "[object HTMLHtmlElement]", "html",
                 "[object HTMLDivElement]", "div",
-                "[object HTMLUnknownElement]", "dIv"
-                })
+                "[object HTMLUnknownElement]", "dIv"})
     public void xml_localName() throws Exception {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
@@ -633,8 +690,7 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts({"[object Element]", "undefined",
                 "[object HTMLHtmlElement]", "undefined",
                 "[object HTMLDivElement]", "undefined",
-                "[object HTMLUnknownElement]", "undefined"
-                })
+                "[object HTMLUnknownElement]", "undefined"})
     public void xml_baseName() throws Exception {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
@@ -649,8 +705,7 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts({"[object Element]", "null",
                 "[object HTMLHtmlElement]", "http://www.w3.org/1999/xhtml",
                 "[object HTMLDivElement]", "http://www.w3.org/1999/xhtml",
-                "[object HTMLUnknownElement]", "http://www.w3.org/1999/xhtml"
-                })
+                "[object HTMLUnknownElement]", "http://www.w3.org/1999/xhtml"})
     public void xml_namespaceURI() throws Exception {
         // TODO [IE]SINGLE-VS-BULK test runs when executed as single but breaks as bulk
         shutDownRealIE();
@@ -663,6 +718,7 @@ public class ElementTest extends WebDriverTestCase {
               "<html>\n"
             + "  <head>\n"
             + "    <script>\n"
+            + LOG_TITLE_FUNCTION
             + "      function test() {\n"
             + "        var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'foo.xml'") + ";\n"
             + "        debug(doc.documentElement.childNodes[0]);\n"
@@ -672,9 +728,9 @@ public class ElementTest extends WebDriverTestCase {
             + "      }\n"
             + "      function debug(e) {\n"
             + "        try {\n"
-            + "          alert(e);\n"
-            + "        } catch(ex) {alert(ex)}\n"
-            + "        alert(e." + methodName + ");\n"
+            + "          log(e);\n"
+            + "        } catch(ex) {log(ex)}\n"
+            + "        log(e." + methodName + ");\n"
             + "      }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "    </script>\n"
@@ -693,7 +749,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</xml>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -713,22 +769,23 @@ public class ElementTest extends WebDriverTestCase {
             = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var str = '';\n"
             + "    try {\n"
-            + "      alert(Element.prototype ? 'prototype found' : 'prototype not found');\n"
+            + "      log(Element.prototype ? 'prototype found' : 'prototype not found');\n"
             + "      var str = '';\n"
             + "      for (var i in Element)\n"
             + "        str += i + ', ';\n"
-            + "      alert(str);\n"
-            + "    } catch (e) { alert('exception occured')}\n"
+            + "      log(str);\n"
+            + "    } catch (e) { log('exception occured')}\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
             + "<body onload='test()'>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -740,11 +797,12 @@ public class ElementTest extends WebDriverTestCase {
         final String html = "<html>\n"
             + "  <head>\n"
             + "    <script>\n"
+            + LOG_TITLE_FUNCTION
             + "      function test() {\n"
             + "        var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'foo.xml'") + ";\n"
             + "        var e = doc.getElementsByTagName('title');\n"
             + "        e[0].removeAttribute('hello');\n"
-            + "        alert('finished');\n"
+            + "        log('finished');\n"
             + "      }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "    </script>\n"
@@ -762,7 +820,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -772,11 +830,12 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts("function")
     public void getBoundingClientRect() throws Exception {
         final String html = "<html><body><script>\n"
+            + LOG_TITLE_FUNCTION
             + "try {\n"
-            + "  alert(typeof Element.prototype.getBoundingClientRect);\n"
-            + "} catch (e) { alert('exception');}\n"
+            + "  log(typeof Element.prototype.getBoundingClientRect);\n"
+            + "} catch (e) { log('exception');}\n"
             + "</script></body></html>";
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -846,14 +905,15 @@ public class ElementTest extends WebDriverTestCase {
         final String html
             = "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var e = document.getElementById('myDiv');\n"
             + "    if (e.firstElementChild) {\n"
-            + "      alert(e.firstElementChild.id);\n"
-            + "      alert(e.lastElementChild.id);\n"
-            + "      alert(e.childElementCount);\n"
-            + "      alert(e.firstElementChild.nextElementSibling.id);\n"
-            + "      alert(e.lastElementChild.previousElementSibling.id);\n"
+            + "      log(e.firstElementChild.id);\n"
+            + "      log(e.lastElementChild.id);\n"
+            + "      log(e.childElementCount);\n"
+            + "      log(e.firstElementChild.nextElementSibling.id);\n"
+            + "      log(e.lastElementChild.previousElementSibling.id);\n"
             + "    }\n"
             + "  }\n"
             + "</script>\n"
@@ -866,7 +926,7 @@ public class ElementTest extends WebDriverTestCase {
             + "  </div>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -876,7 +936,7 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts(DEFAULT = {"§§URL§§", "§§URL§§"},
             IE = {"undefined", "undefined"})
     public void baseURI() throws Exception {
-        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_ + "<html><head><title>foo</title><script>\n"
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_ + "<html><head><script>\n"
             + "function test() {\n"
             + "  var text = '<hello><child></child></hello>';\n"
             + "  var doc = " + XMLDocumentTest.callLoadXMLDocumentFromString("text") + ";\n"
@@ -901,32 +961,33 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts(DEFAULT = {"[object HTMLCollection] 1", "[object HTMLCollection] 2", "[object HTMLCollection] 0"},
             IE = {"exception", "[object HTMLCollection] 2", "[object HTMLCollection] 0"})
     public void children() throws Exception {
-        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_ + "<html><head><title>foo</title><script>\n"
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_ + "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "function test() {\n"
             + "  var text = '<hello><child></child></hello>';\n"
             + "  var doc = " + XMLDocumentTest.callLoadXMLDocumentFromString("text") + ";\n"
 
             + "  try {\n"
             + "    var children = doc.documentElement.children;\n"
-            + "    alert(children + ' ' + children.length);\n"
-            + "  } catch (e) { alert('exception'); }\n"
+            + "    log(children + ' ' + children.length);\n"
+            + "  } catch (e) { log('exception'); }\n"
 
             + "  try {\n"
             + "    children = document.documentElement.children;\n"
-            + "    alert(children + ' ' + children.length);\n"
-            + "  } catch (e) { alert('exception'); }\n"
+            + "    log(children + ' ' + children.length);\n"
+            + "  } catch (e) { log('exception'); }\n"
 
             + "  try {\n"
             + "    children = document.getElementById('myId').children;\n"
-            + "    alert(children + ' ' + children.length);\n"
-            + "  } catch (e) { alert('exception'); }\n"
+            + "    log(children + ' ' + children.length);\n"
+            + "  } catch (e) { log('exception'); }\n"
             + "}\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_STRING_FUNCTION
             + "</script></head><body onload='test()'>\n"
             + "  <div id='myId'>abcd</div>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -936,19 +997,20 @@ public class ElementTest extends WebDriverTestCase {
     @Alerts(DEFAULT = {"", "a b c"},
             IE = {"undefined", "a b c"})
     public void classList() throws Exception {
-        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_ + "<html><head><title>foo</title><script>\n"
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_ + "<html><head><script>\n"
+            + LOG_TITLE_FUNCTION
             + "function test() {\n"
             + "  var text = '<hello><child></child></hello>';\n"
             + "  var doc = " + XMLDocumentTest.callLoadXMLDocumentFromString("text") + ";\n"
-            + "  alert(doc.documentElement.classList);\n"
-            + "  alert(document.body.classList);\n"
+            + "  log(doc.documentElement.classList);\n"
+            + "  log(document.body.classList);\n"
             + "}\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_STRING_FUNCTION
             + "</script></head><body onload='test()' class='a b c'>\n"
             + "  <div id='myId'>abcd</div>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -962,15 +1024,16 @@ public class ElementTest extends WebDriverTestCase {
         final String html = "<html>\n"
             + "  <head>\n"
             + "    <script>\n"
+            + LOG_TITLE_FUNCTION
             + "      function test() {\n"
             + "        var doc = document.implementation.createDocument(\"\", \"\", null);\n"
             + "        var element = doc.createElementNS(\'uri:test\', \'test:element\');\n"
             + "        element.setAttributeNS(\'uri:test\', \'test:attribute\', 'test value');\n"
-            + "        alert(element.getAttributeNS(\'uri:test\', \'attribute\'));\n"
-            + "        alert(element.hasAttributeNS(\'uri:test\', \'attribute\'));\n"
+            + "        log(element.getAttributeNS(\'uri:test\', \'attribute\'));\n"
+            + "        log(element.hasAttributeNS(\'uri:test\', \'attribute\'));\n"
             + "        element.removeAttributeNS(\'uri:test\', \'attribute\');\n"
-            + "        alert(element.hasAttributeNS(\'uri:test\', \'attribute\'));\n"
-            + "        alert('finished');\n"
+            + "        log(element.hasAttributeNS(\'uri:test\', \'attribute\'));\n"
+            + "        log('finished');\n"
             + "      }\n"
             + "    </script>\n"
             + "  </head>\n"
@@ -978,7 +1041,7 @@ public class ElementTest extends WebDriverTestCase {
             + "  </body>\n"
             + "</html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -993,12 +1056,13 @@ public class ElementTest extends WebDriverTestCase {
         final String html = "<html>\n"
             + "  <head>\n"
             + "    <script>\n"
+            + LOG_TITLE_FUNCTION
             + "      function test() {\n"
             + "        var doc = " + XMLDocumentTest.callLoadXMLDocumentFromFile("'foo.xml'") + ";\n"
             + "        var e = doc.getElementsByTagName('title')[0];\n"
-            + "        alert(e.getAttribute('normal'));\n"
+            + "        log(e.getAttribute('normal'));\n"
             + "        e.removeAttribute('Normal');\n"
-            + "        alert(e.getAttribute('normal'));\n"
+            + "        log(e.getAttribute('normal'));\n"
             + "      }\n"
             + XMLDocumentTest.LOAD_XML_DOCUMENT_FROM_FILE_FUNCTION
             + "    </script>\n"
@@ -1016,7 +1080,7 @@ public class ElementTest extends WebDriverTestCase {
             + "</books>";
 
         getMockWebConnection().setDefaultResponse(xml, MimeType.TEXT_XML);
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1055,18 +1119,19 @@ public class ElementTest extends WebDriverTestCase {
         final String html = "<html>\n"
             + "<head>\n"
             + "  <script>\n"
+            + LOG_TITLE_FUNCTION
             + "    function test() {\n"
             + "      var e = document.getElementById('tester');\n"
-            + "      alert(e.currentStyle ? 'available' : e.currentStyle);\n"
+            + "      log(e.currentStyle ? 'available' : e.currentStyle);\n"
             + "      e = document.createElement('div');\n"
-            + "      alert(e.currentStyle ? 'available' : e.currentStyle);\n"
+            + "      log(e.currentStyle ? 'available' : e.currentStyle);\n"
             + "    }\n"
             + "  </script>\n"
             + "</head>\n"
             + "<body onload='test()'>\n"
             + "  <div id='tester'></div>\n"
             + "</body></html>";
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1078,15 +1143,16 @@ public class ElementTest extends WebDriverTestCase {
         final String html = "<html>\n"
             + "<head>\n"
             + "  <script>\n"
+            + LOG_TITLE_FUNCTION
             + "    function test() {\n"
-            + "      alert(Element.ALLOW_KEYBOARD_INPUT);\n"
-            + "      alert(typeof Element.ALLOW_KEYBOARD_INPUT);\n"
+            + "      log(Element.ALLOW_KEYBOARD_INPUT);\n"
+            + "      log(typeof Element.ALLOW_KEYBOARD_INPUT);\n"
             + "    }\n"
             + "  </script>\n"
             + "</head>\n"
             + "<body onload='test()'>\n"
             + "</body></html>";
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1133,7 +1199,7 @@ public class ElementTest extends WebDriverTestCase {
             + "      process(Element);\n"
             + "      process(Element.prototype);\n"
             + "      process(Element.prototype.constructor);\n"
-            + "    } catch (e) {alert('exception')}\n"
+            + "    } catch (e) {log('exception')}\n"
             + "  }\n"
             + "  function process(obj) {\n"
             + "    try {\n"
@@ -1189,13 +1255,14 @@ public class ElementTest extends WebDriverTestCase {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    info(document.getElementById('emptyDiv'));\n"
             + "    info(document.getElementById('whitespaceDiv'));\n"
             + "    info(document.getElementById('testDiv'));\n"
             + "  }\n"
             + "  function info(e) {\n"
-            + "    alert(e.childElementCount + '-' + e.childNodes.length);\n"
+            + "    log(e.childElementCount + '-' + e.childNodes.length);\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
@@ -1211,7 +1278,7 @@ public class ElementTest extends WebDriverTestCase {
             + "  </div>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1223,12 +1290,13 @@ public class ElementTest extends WebDriverTestCase {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    info(document.getElementById('myTable'));\n"
             + "    info(document.getElementById('myTr'));\n"
             + "  }\n"
             + "  function info(e) {\n"
-            + "    alert(e.childElementCount + '-' + e.childNodes.length);\n"
+            + "    log(e.childElementCount + '-' + e.childNodes.length);\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
@@ -1244,7 +1312,7 @@ public class ElementTest extends WebDriverTestCase {
             + "  </table>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1256,9 +1324,10 @@ public class ElementTest extends WebDriverTestCase {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
-            + "    alert(document.body.hasAttributes());\n"
-            + "    alert(document.body.childNodes.item(1).hasAttributes());\n"
+            + "    log(document.body.hasAttributes());\n"
+            + "    log(document.body.childNodes.item(1).hasAttributes());\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
@@ -1266,7 +1335,7 @@ public class ElementTest extends WebDriverTestCase {
             + "  <div></div>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1279,17 +1348,18 @@ public class ElementTest extends WebDriverTestCase {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var birds = document.getElementsByTagName('li');\n"
             + "    var found = false;"
             + "    for (var i = 0; i < birds.length; i++) {\n"
             + "      if (birds[i].matches && birds[i].matches('.endangered')) {\n"
-            + "        alert(birds[i].textContent);\n"
+            + "        log(birds[i].textContent);\n"
             + "        found = true;"
             + "      }\n"
             + "    }\n"
             + "    if (!found) {\n"
-            + "      alert('not found');\n"
+            + "      log('not found');\n"
             + "    }\n"
             + "  }\n"
             + "</script>\n"
@@ -1302,7 +1372,7 @@ public class ElementTest extends WebDriverTestCase {
             + "  </ul>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1315,16 +1385,17 @@ public class ElementTest extends WebDriverTestCase {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var birds = document.getElementsByTagName('li');\n"
             + "    try {\n"
             + "      for (var i = 0; i < birds.length; i++) {\n"
             + "        if (birds[i].matches && birds[i].matches('invalidSelector!=:::x')) {\n"
-            + "          alert(birds[i].textContent);\n"
+            + "          log(birds[i].textContent);\n"
             + "        }\n"
             + "      }\n"
-            + "    } catch (e) { alert(e.name); }\n"
-            + "    alert('done');\n"
+            + "    } catch (e) { log(e.name); }\n"
+            + "    log('done');\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
@@ -1334,7 +1405,7 @@ public class ElementTest extends WebDriverTestCase {
             + "  </ul>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 
     /**
@@ -1346,6 +1417,7 @@ public class ElementTest extends WebDriverTestCase {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head>\n"
             + "<script>\n"
+            + LOG_TITLE_FUNCTION
             + "  function test() {\n"
             + "    var docElem = document.documentElement;\n"
             + "    var matches = docElem.matchesSelector\n"
@@ -1354,8 +1426,8 @@ public class ElementTest extends WebDriverTestCase {
             + "         || docElem.msMatchesSelector;\n"
             + "    try {\n"
             + "      matches.call(window, ':visible')\n"
-            + "    } catch (e) { alert(e.name); }\n"
-            + "    alert('done');\n"
+            + "    } catch (e) { log(e.name); }\n"
+            + "    log('done');\n"
             + "  }\n"
             + "</script>\n"
             + "</head>\n"
@@ -1365,6 +1437,6 @@ public class ElementTest extends WebDriverTestCase {
             + "  </ul>\n"
             + "</body></html>";
 
-        loadPageWithAlerts2(html);
+        loadPageVerifyTitle2(html);
     }
 }

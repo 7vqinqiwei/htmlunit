@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,6 +14,7 @@
  */
 package com.gargoylesoftware.htmlunit.javascript.host.html;
 
+import static com.gargoylesoftware.htmlunit.BrowserVersionFeatures.HTMLDOCUMENT_COOKIES_IGNORE_BLANK;
 import static com.gargoylesoftware.htmlunit.BrowserVersionFeatures.HTMLDOCUMENT_ELEMENTS_BY_NAME_EMPTY;
 import static com.gargoylesoftware.htmlunit.BrowserVersionFeatures.HTMLDOCUMENT_FUNCTION_DETACHED;
 import static com.gargoylesoftware.htmlunit.BrowserVersionFeatures.HTMLDOCUMENT_GET_ALSO_FRAMES;
@@ -69,6 +70,7 @@ import com.gargoylesoftware.htmlunit.javascript.host.dom.Document;
 import com.gargoylesoftware.htmlunit.javascript.host.dom.Selection;
 import com.gargoylesoftware.htmlunit.javascript.host.event.Event;
 import com.gargoylesoftware.htmlunit.util.Cookie;
+import com.gargoylesoftware.htmlunit.util.UrlUtils;
 
 import net.sourceforge.htmlunit.corejs.javascript.Context;
 import net.sourceforge.htmlunit.corejs.javascript.Function;
@@ -458,6 +460,10 @@ public class HTMLDocument extends Document {
         final HtmlPage page = getPage();
         final WebClient client = page.getWebClient();
 
+        if (StringUtils.isBlank(newCookie)
+                && client.getBrowserVersion().hasFeature(HTMLDOCUMENT_COOKIES_IGNORE_BLANK)) {
+            return;
+        }
         client.addCookie(newCookie, getPage().getUrl(), this);
     }
 
@@ -495,7 +501,7 @@ public class HTMLDocument extends Document {
         if (ww instanceof FrameWindow
                 && (!Undefined.isUndefined(url)
                         || getBrowserVersion().hasFeature(JS_DOCUMENT_OPEN_OVERWRITES_ABOUT_BLANK_LOCATION))
-                && WebClient.ABOUT_BLANK.equals(getPage().getUrl().toExternalForm())) {
+                && UrlUtils.ABOUT_BLANK.equals(getPage().getUrl().toExternalForm())) {
             final URL enclosingUrl = ((FrameWindow) ww).getEnclosingPage().getUrl();
             getPage().getWebResponse().getWebRequest().setUrl(enclosingUrl);
         }

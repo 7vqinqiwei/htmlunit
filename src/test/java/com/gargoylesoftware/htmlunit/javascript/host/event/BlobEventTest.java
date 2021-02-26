@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,7 +45,6 @@ public class BlobEventTest extends WebDriverTestCase {
      */
     @Test
     @Alerts(DEFAULT = "exception",
-            FF = {"[object BlobEvent]", "blob", "false", "false", "false", "null"},
             FF78 = {"[object BlobEvent]", "blob", "false", "false", "false", "null"})
     public void create_ctor() throws Exception {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
@@ -68,8 +67,7 @@ public class BlobEventTest extends WebDriverTestCase {
      */
     @Test
     @Alerts("exception")
-    @HtmlUnitNYI(FF = {"[object BlobEvent]", "undefined", "false", "false", "false", "null"},
-                FF78 = {"[object BlobEvent]", "undefined", "false", "false", "false", "null"})
+    @HtmlUnitNYI(FF78 = {"[object BlobEvent]", "undefined", "false", "false", "false", "null"})
     public void create_ctorWithoutType() throws Exception {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
             + "<html><head><title>foo</title><script>\n"
@@ -91,7 +89,6 @@ public class BlobEventTest extends WebDriverTestCase {
      */
     @Test
     @Alerts(DEFAULT = "exception",
-            FF = {"[object BlobEvent]", "42", "false", "false", "false", "null"},
             FF78 = {"[object BlobEvent]", "42", "false", "false", "false", "null"})
     public void create_ctorNumericType() throws Exception {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
@@ -114,7 +111,6 @@ public class BlobEventTest extends WebDriverTestCase {
      */
     @Test
     @Alerts(DEFAULT = "exception",
-            FF = {"[object BlobEvent]", "null", "false", "false", "false", "null"},
             FF78 = {"[object BlobEvent]", "null", "false", "false", "false", "null"})
     public void create_ctorNullType() throws Exception {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
@@ -158,7 +154,6 @@ public class BlobEventTest extends WebDriverTestCase {
      */
     @Test
     @Alerts(DEFAULT = "exception",
-            FF = {"[object BlobEvent]", "HtmlUnitEvent", "false", "false", "false", "null"},
             FF78 = {"[object BlobEvent]", "HtmlUnitEvent", "false", "false", "false", "null"})
     public void create_ctorArbitraryType() throws Exception {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
@@ -207,7 +202,6 @@ public class BlobEventTest extends WebDriverTestCase {
      */
     @Test
     @Alerts(DEFAULT = "exception",
-            FF = {"[object BlobEvent]", "blob", "false", "false", "false", "null"},
             FF78 = {"[object BlobEvent]", "blob", "false", "false", "false", "null"})
     public void create_ctorAllDetailsMissingData() throws Exception {
         final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_

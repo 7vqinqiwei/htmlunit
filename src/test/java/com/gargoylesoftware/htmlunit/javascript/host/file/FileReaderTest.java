@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -254,10 +254,10 @@ public class FileReaderTest extends WebDriverTestCase {
      * @throws Exception if the test fails
      */
     @Test
-    @Alerts(DEFAULT = "data:",
-            FF = "data:image/png;base64,",
-            FF78 = "data:image/png;base64,",
-            IE = "null")
+    @Alerts(DEFAULT = "#data:",
+            FF = "#data:image/png;base64,",
+            FF78 = "#data:image/png;base64,",
+            IE = "#null")
     public void readAsDataURLEmptyImage() throws Exception {
         final String html
             = HtmlPageTest.STANDARDS_MODE_PREFIX_
@@ -268,9 +268,9 @@ public class FileReaderTest extends WebDriverTestCase {
             + "    var file = document.querySelector('input[type=file]').files[0];\n"
             + "    var reader = new FileReader();\n"
             + "    reader.addEventListener('load', function () {\n"
-            + "      alert(reader.result);\n"
+            + "      alert('#' + reader.result);\n"
             + "    }, false);\n"
-            + "\n"
+
             + "    if (file) {\n"
             + "      reader.readAsDataURL(file);\n"
             + "    }\n"

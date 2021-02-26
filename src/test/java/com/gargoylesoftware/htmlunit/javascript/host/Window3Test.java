@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 
 import com.gargoylesoftware.htmlunit.BrowserRunner;
 import com.gargoylesoftware.htmlunit.BrowserRunner.Alerts;
@@ -399,6 +400,40 @@ public class Window3Test extends WebDriverTestCase {
     }
 
     /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts(DEFAULT = {"document", "body"},
+            IE = "document")
+    @HtmlUnitNYI(IE = {"document", "body"})
+    public void scrollEvents() throws Exception {
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
+            + "<html>\n"
+            + "<head>\n"
+            + "<script>\n"
+            + "  function log(msg) {\n"
+            + "    var ta = document.getElementById('myTextArea');\n"
+            + "    ta.value += msg + '; ';\n"
+            + "  }\n"
+            + "  function test() {\n"
+            + "    document.addEventListener('scroll', function(e) { log(\"document\") });\n"
+            + "    window.scroll(10, 20);\n"
+            + "  }\n"
+            + "</script>\n"
+            + "</head>\n"
+            + "<body onload='test()' onscroll='log(\"body\")'>\n"
+            + "  <div onscroll='log(\"div\")' style='height: 1000px;'></div>\n"
+
+            + "  <textarea id='myTextArea' cols='80' rows='30'></textarea>\n"
+            + "</body>\n"
+            + "</html>";
+        final WebDriver driver = loadPage2(html);
+
+        final WebElement textArea = driver.findElement(By.id("myTextArea"));
+        assertEquals(String.join("; ", getExpectedAlerts()) + "; ", textArea.getAttribute("value"));
+    }
+
+    /**
      * Test that Window.scrollBy method gets correctly called and handled by the scripting engine.
      * @throws Exception if the test fails
      */
@@ -410,6 +445,40 @@ public class Window3Test extends WebDriverTestCase {
             + "</script></head><body>\n"
             + "</body></html>";
         loadPageWithAlerts2(html);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts(DEFAULT = {"document", "body"},
+            IE = "document")
+    @HtmlUnitNYI(IE = {"document", "body"})
+    public void scrollByEvents() throws Exception {
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
+            + "<html>\n"
+            + "<head>\n"
+            + "<script>\n"
+            + "  function log(msg) {\n"
+            + "    var ta = document.getElementById('myTextArea');\n"
+            + "    ta.value += msg + '; ';\n"
+            + "  }\n"
+            + "  function test() {\n"
+            + "    document.addEventListener('scroll', function(e) { log(\"document\") });\n"
+            + "    window.scrollBy(10, 20);\n"
+            + "  }\n"
+            + "</script>\n"
+            + "</head>\n"
+            + "<body onload='test()' onscroll='log(\"body\")'>\n"
+            + "  <div onscroll='log(\"div\")' style='height: 1000px;'></div>\n"
+
+            + "  <textarea id='myTextArea' cols='80' rows='30'></textarea>\n"
+            + "</body>\n"
+            + "</html>";
+        final WebDriver driver = loadPage2(html);
+
+        final WebElement textArea = driver.findElement(By.id("myTextArea"));
+        assertEquals(String.join("; ", getExpectedAlerts()) + "; ", textArea.getAttribute("value"));
     }
 
     /**
@@ -462,6 +531,40 @@ public class Window3Test extends WebDriverTestCase {
             + "</script></head><body>\n"
             + "</body></html>";
         loadPageWithAlerts2(html);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts(DEFAULT = {"document", "body"},
+            IE = "document")
+    @HtmlUnitNYI(IE = {"document", "body"})
+    public void scrollToEvents() throws Exception {
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
+            + "<html>\n"
+            + "<head>\n"
+            + "<script>\n"
+            + "  function log(msg) {\n"
+            + "    var ta = document.getElementById('myTextArea');\n"
+            + "    ta.value += msg + '; ';\n"
+            + "  }\n"
+            + "  function test() {\n"
+            + "    document.addEventListener('scroll', function(e) { log(\"document\") });\n"
+            + "    window.scrollTo(10, 20);\n"
+            + "  }\n"
+            + "</script>\n"
+            + "</head>\n"
+            + "<body onload='test()' onscroll='log(\"body\")'>\n"
+            + "  <div onscroll='log(\"div\")' style='height: 1000px;'></div>\n"
+
+            + "  <textarea id='myTextArea' cols='80' rows='30'></textarea>\n"
+            + "</body>\n"
+            + "</html>";
+        final WebDriver driver = loadPage2(html);
+
+        final WebElement textArea = driver.findElement(By.id("myTextArea"));
+        assertEquals(String.join("; ", getExpectedAlerts()) + "; ", textArea.getAttribute("value"));
     }
 
     /**
@@ -2017,6 +2120,131 @@ public class Window3Test extends WebDriverTestCase {
 
         final WebDriver driver = loadPage2(html);
         Thread.sleep(200);
+        final String text = driver.getTitle().trim().replaceAll(";", "\n").trim();
+        assertEquals(String.join("\n", getExpectedAlerts()), text);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts({"function () { log(\"onload from body\") }",
+                "function () { log(\"onload from body\") }",
+                "function () { log(\"onload from window\") }",
+                "function () { log(\"onload from window\") }",
+                "null",
+                "null",
+                "function () { log(\"onload from body\") }",
+                "function () { log(\"onload from body\") }",
+                "onload from body"})
+    public void onloadFromBody() throws Exception {
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
+            + "<html><head>\n"
+            + "</head>\n"
+            + "<body>\n"
+            + "<script>\n"
+            + "  function log(msg) {\n"
+            + "    window.parent.document.title += ('' + msg).replace(';', '') + ';';\n"
+            + "  }\n"
+
+            + "  document.body.onload = function () { log(\"onload from body\") };\n"
+            + "  log(document.body.onload);\n"
+            + "  log(window.onload);\n"
+
+            + "  window.onload = function () { log(\"onload from window\") };\n"
+            + "  log(document.body.onload);\n"
+            + "  log(window.onload);\n"
+
+            + "  window.onload = undefined;\n"
+            + "  log(document.body.onload);\n"
+            + "  log(window.onload);\n"
+
+            + "  document.body.onload = function () { log(\"onload from body\") };\n"
+            + "  log(document.body.onload);\n"
+            + "  log(window.onload);\n"
+
+            + "</script>\n"
+            + "</body></html>";
+
+        final WebDriver driver = loadPage2(html);
+        final String text = driver.getTitle().trim().replaceAll(";", "\n").trim();
+        assertEquals(String.join("\n", getExpectedAlerts()), text);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts({})
+    public void onloadListenerFromBody() throws Exception {
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
+            + "<html><head>\n"
+            + "</head>\n"
+            + "<body>\n"
+            + "<script>\n"
+            + "  function log(msg) {\n"
+            + "    window.parent.document.title += msg + ';';\n"
+            + "  }\n"
+
+            + "  document.body.addEventListener(\"load\", function () { log(\"onload from body\") });\n"
+            + "</script>\n"
+            + "</body></html>";
+
+        final WebDriver driver = loadPage2(html);
+        final String text = driver.getTitle().trim().replaceAll(";", "\n").trim();
+        assertEquals(String.join("\n", getExpectedAlerts()), text);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts("onload from window")
+    public void onloadListenerFromBodyAndWindow() throws Exception {
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
+            + "<html><head>\n"
+            + "</head>\n"
+            + "<body>\n"
+            + "<script>\n"
+            + "  function log(msg) {\n"
+            + "    window.parent.document.title += msg + ';';\n"
+            + "  }\n"
+
+            + "  document.body.addEventListener(\"load\", function () { log(\"onload from body\") });\n"
+            + "  window.addEventListener(\"load\", function () { log(\"onload from window\") });\n"
+
+            + "</script>\n"
+            + "</body></html>";
+
+        final WebDriver driver = loadPage2(html);
+        final String text = driver.getTitle().trim().replaceAll(";", "\n").trim();
+        assertEquals(String.join("\n", getExpectedAlerts()), text);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts({})
+    public void onloadListenerFromBodyAndWindowRemoved() throws Exception {
+        final String html = HtmlPageTest.STANDARDS_MODE_PREFIX_
+            + "<html><head>\n"
+            + "</head>\n"
+            + "<body>\n"
+            + "<script>\n"
+            + "  function log(msg) {\n"
+            + "    window.parent.document.title += msg + ';';\n"
+            + "  }\n"
+
+            + "  document.body.addEventListener(\"load\", function () { log(\"onload from body\") });\n"
+            + "  function evt() { log(\"onload from window\") }"
+            + "  window.addEventListener(\"load\", evt);\n"
+            + "  window.removeEventListener(\"load\", evt);\n"
+
+            + "</script>\n"
+            + "</body></html>";
+
+        final WebDriver driver = loadPage2(html);
         final String text = driver.getTitle().trim().replaceAll(";", "\n").trim();
         assertEquals(String.join("\n", getExpectedAlerts()), text);
     }

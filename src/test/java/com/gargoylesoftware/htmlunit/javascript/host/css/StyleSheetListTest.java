@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@ package com.gargoylesoftware.htmlunit.javascript.host.css;
 
 import static com.gargoylesoftware.htmlunit.BrowserRunner.TestedBrowser.CHROME;
 import static com.gargoylesoftware.htmlunit.BrowserRunner.TestedBrowser.EDGE;
+import static com.gargoylesoftware.htmlunit.BrowserRunner.TestedBrowser.FF;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -239,10 +240,10 @@ public class StyleSheetListTest extends WebDriverTestCase {
      * @throws Exception if an error occurs
      */
     @Test
-    @Alerts(DEFAULT = {"1", "2"},
-            CHROME = {"1", "1"},
-            EDGE = {"1", "1"})
-    @NotYetImplemented({CHROME, EDGE})
+    @Alerts(DEFAULT = {"1", "1"},
+            FF78 = {"1", "2"},
+            IE = {"1", "2"})
+    @NotYetImplemented({CHROME, EDGE, FF})
     public void dynamicAddedStyleSheet() throws Exception {
         final String html =
               "<html>\n"

@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -2122,7 +2122,7 @@ public class WebClientTest extends SimpleWebTestCase {
     @Test
     public void openWindowWithAboutBlank() throws Exception {
         final WebClient client = getWebClient();
-        final WebWindow window = client.openWindow(WebClient.URL_ABOUT_BLANK, "TestingWindow");
+        final WebWindow window = client.openWindow(UrlUtils.URL_ABOUT_BLANK, "TestingWindow");
         assertNotNull(window);
     }
 
@@ -2490,14 +2490,14 @@ public class WebClientTest extends SimpleWebTestCase {
     public void aboutBlankSharedRequest() throws Exception {
         final WebClient webClient = getWebClient();
 
-        final WebWindow firstWindow = webClient.openWindow(WebClient.URL_ABOUT_BLANK, "Window 1");
+        final WebWindow firstWindow = webClient.openWindow(UrlUtils.URL_ABOUT_BLANK, "Window 1");
         assertNotNull(firstWindow);
 
         final WebRequest firstRequest1 = firstWindow.getEnclosedPage().getWebResponse().getWebRequest();
         assertEquals("about:blank", firstRequest1.getUrl().toExternalForm());
-        firstRequest1.setUrl(UrlUtils.toUrlSafe(WebClient.ABOUT_BLANK + "#anchor"));
+        firstRequest1.setUrl(UrlUtils.toUrlSafe(UrlUtils.ABOUT_BLANK + "#anchor"));
 
-        final WebWindow secondWindow = webClient.openWindow(WebClient.URL_ABOUT_BLANK, "Window 2");
+        final WebWindow secondWindow = webClient.openWindow(UrlUtils.URL_ABOUT_BLANK, "Window 2");
         assertNotNull(secondWindow);
         final WebRequest secondRequest = secondWindow.getEnclosedPage().getWebResponse().getWebRequest();
         assertEquals("about:blank", secondRequest.getUrl().toExternalForm());
@@ -2553,5 +2553,45 @@ public class WebClientTest extends SimpleWebTestCase {
         client.getOptions().setWebSocketEnabled(true);
         client.getPage(URL_FIRST);
         assertEquals(new String[]{"true"}, actual);
+    }
+
+    /**
+     * @throws Exception if an error occurs
+     */
+    @Test
+    public void loadHtmlCodeIntoCurrentWindow() throws Exception {
+        final String htmlCode = "<html>"
+                + "  <head>"
+                + "    <title>Title</title>"
+                + "  </head>"
+                + "  <body>"
+                + "    content..."
+                + "  </body>"
+                + "</html> ";
+
+        final WebClient client = getWebClient();
+        final HtmlPage page = client.loadHtmlCodeIntoCurrentWindow(htmlCode);
+        assertEquals("content...", page.getBody().asText());
+    }
+
+    /**
+     * @throws Exception if an error occurs
+     */
+    @Test
+    public void loadXHtmlCodeIntoCurrentWindow() throws Exception {
+        final String htmlCode = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\""
+                + "\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">"
+                + "<html xmlns=\"http://www.w3.org/1999/xhtml\">"
+                + "  <head>"
+                + "    <title>Title</title>"
+                + "  </head>"
+                + "  <body>"
+                + "    content..."
+                + "  </body>"
+                + "</html> ";
+
+        final WebClient client = getWebClient();
+        final HtmlPage page = client.loadXHtmlCodeIntoCurrentWindow(htmlCode);
+        assertEquals("content...", page.getBody().asText());
     }
 }

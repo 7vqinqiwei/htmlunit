@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -94,7 +94,7 @@ public final class BrowserVersion implements Serializable {
     private static final String PLATFORM_WIN64 = "Win64";
 
     /** Latest Firefox. */
-    public static final BrowserVersion FIREFOX = new BrowserVersion(82, "FF");
+    public static final BrowserVersion FIREFOX = new BrowserVersion(85, "FF");
 
     /** Firefox 78 ESR. */
     public static final BrowserVersion FIREFOX_78 = new BrowserVersion(78, "FF78");
@@ -103,10 +103,10 @@ public final class BrowserVersion implements Serializable {
     public static final BrowserVersion INTERNET_EXPLORER = new BrowserVersion(11, "IE");
 
     /** Latest Edge */
-    public static final BrowserVersion EDGE = new BrowserVersion(86, "Edge");
+    public static final BrowserVersion EDGE = new BrowserVersion(88, "Edge");
 
     /** Latest Chrome. */
-    public static final BrowserVersion CHROME = new BrowserVersion(86, "Chrome");
+    public static final BrowserVersion CHROME = new BrowserVersion(88, "Chrome");
 
     /**
      * Array with all supported browsers
@@ -212,9 +212,9 @@ public final class BrowserVersion implements Serializable {
 
         // CHROME (Win10 64bit)
         CHROME.applicationVersion_ = "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
-                                        + CHROME.getBrowserVersionNumeric() + ".0.4240.111 Safari/537.36";
+                                        + CHROME.getBrowserVersionNumeric() + ".0.4324.96 Safari/537.36";
         CHROME.userAgent_ = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
-                                        + CHROME.getBrowserVersionNumeric() + ".0.4240.111 Safari/537.36";
+                                        + CHROME.getBrowserVersionNumeric() + ".0.4324.96 Safari/537.36";
 
         CHROME.applicationCodeName_ = "Mozilla";
         CHROME.vendor_ = "Google Inc.";
@@ -239,7 +239,7 @@ public final class BrowserVersion implements Serializable {
         CHROME.htmlAcceptHeader_ = "text/html,application/xhtml+xml,application/xml;"
                                             + "q=0.9,image/avif,image/webp,image/apng,*/*;"
                                             + "q=0.8,application/signed-exchange;v=b3;q=0.9";
-        CHROME.imgAcceptHeader_ = "image/avif,image/webp,image/apng,image/*,*/*;q=0.8";
+        CHROME.imgAcceptHeader_ = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8";
         CHROME.cssAcceptHeader_ = "text/css,*/*;q=0.1";
         CHROME.scriptAcceptHeader_ = "*/*";
         // there are other issues with Chrome; a different productSub, etc.
@@ -253,11 +253,11 @@ public final class BrowserVersion implements Serializable {
 
         // EDGE (Win10 64bit)
         EDGE.applicationVersion_ = "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
-                                        + EDGE.getBrowserVersionNumeric() + ".0.4240.111 Safari/537.36 Edg/"
-                                        + EDGE.getBrowserVersionNumeric() + ".0.622.51";
+                                        + EDGE.getBrowserVersionNumeric() + ".0.4324.96 Safari/537.36 Edg/"
+                                        + EDGE.getBrowserVersionNumeric() + ".0.705.50";
         EDGE.userAgent_ = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
-                                        + EDGE.getBrowserVersionNumeric() + ".0.4240.111 Safari/537.36 Edg/"
-                                        + EDGE.getBrowserVersionNumeric() + ".0.622.51";
+                                        + EDGE.getBrowserVersionNumeric() + ".0.4324.96 Safari/537.36 Edg/"
+                                        + EDGE.getBrowserVersionNumeric() + ".0.705.50";
 
         EDGE.applicationCodeName_ = "Mozilla";
         EDGE.vendor_ = "Google Inc.";
@@ -282,7 +282,7 @@ public final class BrowserVersion implements Serializable {
         EDGE.htmlAcceptHeader_ = "text/html,application/xhtml+xml,application/xml;"
                                             + "q=0.9,image/webp,image/apng,*/*;"
                                             + "q=0.8,application/signed-exchange;v=b3;q=0.9";
-        EDGE.imgAcceptHeader_ = "image/webp,image/apng,image/*,*/*;q=0.8";
+        EDGE.imgAcceptHeader_ = "image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8";
         EDGE.cssAcceptHeader_ = "text/css,*/*;q=0.1";
         EDGE.scriptAcceptHeader_ = "*/*";
         // there are other issues with Chrome; a different productSub, etc.

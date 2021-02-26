@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -82,6 +82,8 @@ import com.gargoylesoftware.htmlunit.html.FrameWindow;
 import com.gargoylesoftware.htmlunit.html.FrameWindow.PageDenied;
 import com.gargoylesoftware.htmlunit.html.HtmlInlineFrame;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.XHtmlPage;
+import com.gargoylesoftware.htmlunit.html.parser.HTMLParser;
 import com.gargoylesoftware.htmlunit.html.parser.HTMLParserListener;
 import com.gargoylesoftware.htmlunit.httpclient.HtmlUnitBrowserCompatCookieSpec;
 import com.gargoylesoftware.htmlunit.javascript.AbstractJavaScriptEngine;
@@ -206,12 +208,26 @@ public class WebClient implements Serializable, AutoCloseable {
     /** target "_top". */
     private static final String TARGET_TOP = "_top";
 
-    /** "about:". */
-    public static final String ABOUT_SCHEME = "about:";
-    /** "about:blank". */
-    public static final String ABOUT_BLANK = ABOUT_SCHEME + "blank";
-    /** URL for "about:blank". */
-    public static final URL URL_ABOUT_BLANK = UrlUtils.toUrlSafe(ABOUT_BLANK);
+    /**
+     * "about:".
+     * @deprecated as of version 2.47.0; use UrlUtils.ABOUT_BLANK instead
+     */
+    @Deprecated
+    public static final String ABOUT_SCHEME = UrlUtils.ABOUT_SCHEME;
+
+    /**
+     * "about:blank".
+     * @deprecated as of version 2.47.0; use UrlUtils.ABOUT_BLANK instead
+     */
+    @Deprecated
+    public static final String ABOUT_BLANK = UrlUtils.ABOUT_BLANK;
+
+    /**
+     * URL for "about:blank".
+     * @deprecated as of version 2.47.0; use UrlUtils.URL_ABOUT_BLANK instead
+     */
+    @Deprecated
+    public static final URL URL_ABOUT_BLANK = UrlUtils.URL_ABOUT_BLANK;
 
     private ScriptPreProcessor scriptPreProcessor_;
 
@@ -1024,8 +1040,7 @@ public class WebClient implements Serializable, AutoCloseable {
                 if (getBrowserVersion().hasFeature(DIALOGWINDOW_REFERER)
                         && openerPage != null
                         && openerPage.getUrl() != null) {
-                    final String referer = openerPage.getUrl().toExternalForm();
-                    request.setAdditionalHeader(HttpHeader.REFERER, referer);
+                    request.setRefererlHeader(openerPage.getUrl());
                 }
                 getPage(window, request);
             }
@@ -1153,8 +1168,7 @@ public class WebClient implements Serializable, AutoCloseable {
         request.setCharset(UTF_8);
 
         if (getBrowserVersion().hasFeature(DIALOGWINDOW_REFERER) && openerPage != null) {
-            final String referer = openerPage.getUrl().toExternalForm();
-            request.setAdditionalHeader(HttpHeader.REFERER, referer);
+            request.setRefererlHeader(openerPage.getUrl());
         }
 
         getPage(window, request);
@@ -1303,11 +1317,16 @@ public class WebClient implements Serializable, AutoCloseable {
 
     private static WebResponse makeWebResponseForAboutUrl(final WebRequest webRequest) throws MalformedURLException {
         final URL url = webRequest.getUrl();
-        final String urlWithoutQuery = StringUtils.substringBefore(url.toExternalForm(), "?");
-        if (!"blank".equalsIgnoreCase(StringUtils.substringAfter(urlWithoutQuery, WebClient.ABOUT_SCHEME))) {
-            throw new MalformedURLException(url + " is not supported, only about:blank is supported now.");
+        final String urlString = url.toExternalForm();
+        if (UrlUtils.ABOUT_BLANK.equalsIgnoreCase(urlString)) {
+            return new StringWebResponse("", UrlUtils.URL_ABOUT_BLANK);
         }
-        return new StringWebResponse("", URL_ABOUT_BLANK);
+
+        final String urlWithoutQuery = StringUtils.substringBefore(urlString, "?");
+        if (!"blank".equalsIgnoreCase(StringUtils.substringAfter(urlWithoutQuery, UrlUtils.ABOUT_SCHEME))) {
+            throw new MalformedURLException(url + " is not supported, only about:blank is supported at the moment.");
+        }
+        return new StringWebResponse("", url);
     }
 
     /**
@@ -1438,7 +1457,7 @@ public class WebClient implements Serializable, AutoCloseable {
      */
     public WebResponse loadWebResponse(final WebRequest webRequest) throws IOException {
         switch (webRequest.getUrl().getProtocol()) {
-            case "about":
+            case UrlUtils.ABOUT:
                 return makeWebResponseForAboutUrl(webRequest);
 
             case "file":
@@ -2037,7 +2056,7 @@ public class WebClient implements Serializable, AutoCloseable {
                 final FrameWindow fw = (FrameWindow) window;
                 final String enclosingPageState = fw.getEnclosingPage().getDocumentElement().getReadyState();
                 final URL frameUrl = fw.getEnclosedPage().getUrl();
-                if (!DomNode.READY_STATE_COMPLETE.equals(enclosingPageState) || frameUrl == URL_ABOUT_BLANK) {
+                if (!DomNode.READY_STATE_COMPLETE.equals(enclosingPageState) || frameUrl == UrlUtils.URL_ABOUT_BLANK) {
                     return;
                 }
 
@@ -2278,7 +2297,6 @@ public class WebClient implements Serializable, AutoCloseable {
         private final WebWindow requestingWindow_;
         private final String target_;
         private final WebResponse response_;
-        private final URL urlWithOnlyHashChange_;
         private final WeakReference<Page> originalPage_;
         private final WebRequest request_;
 
@@ -2288,17 +2306,6 @@ public class WebClient implements Serializable, AutoCloseable {
             requestingWindow_ = requestingWindow;
             target_ = target;
             response_ = response;
-            urlWithOnlyHashChange_ = null;
-            originalPage_ = new WeakReference<>(requestingWindow.getEnclosedPage());
-        }
-
-        LoadJob(final WebRequest request, final WebWindow requestingWindow, final String target,
-                final URL urlWithOnlyHashChange) {
-            request_ = request;
-            requestingWindow_ = requestingWindow;
-            target_ = target;
-            response_ = null;
-            urlWithOnlyHashChange_ = urlWithOnlyHashChange;
             originalPage_ = new WeakReference<>(requestingWindow.getEnclosedPage());
         }
 
@@ -2334,12 +2341,12 @@ public class WebClient implements Serializable, AutoCloseable {
      */
     public void download(final WebWindow requestingWindow, final String target,
         final WebRequest request, final boolean checkHash, final boolean forceLoad, final String description) {
-        final WebWindow win = resolveWindow(requestingWindow, target);
+        final WebWindow targetWindow = resolveWindow(requestingWindow, target);
         final URL url = request.getUrl();
         boolean justHashJump = false;
 
-        if (win != null && HttpMethod.POST != request.getHttpMethod()) {
-            final Page page = win.getEnclosedPage();
+        if (targetWindow != null && HttpMethod.POST != request.getHttpMethod()) {
+            final Page page = targetWindow.getEnclosedPage();
             if (page != null) {
                 if (page.isHtmlPage() && !((HtmlPage) page).isOnbeforeunloadAccepted()) {
                     return;
@@ -2351,6 +2358,11 @@ public class WebClient implements Serializable, AutoCloseable {
                             HttpMethod.GET == request.getHttpMethod()
                             && UrlUtils.sameFile(url, current)
                             && null != url.getRef();
+
+                    if (justHashJump) {
+                        processOnlyHashChange(targetWindow, url);
+                        return;
+                    }
                 }
             }
         }
@@ -2376,25 +2388,21 @@ public class WebClient implements Serializable, AutoCloseable {
         }
 
         final LoadJob loadJob;
-        if (justHashJump) {
-            loadJob = new LoadJob(request, requestingWindow, target, url);
-        }
-        else {
+        try {
+            WebResponse response;
             try {
-                WebResponse response;
-                try {
-                    response = loadWebResponse(request);
-                }
-                catch (final NoHttpResponseException e) {
-                    LOG.error("NoHttpResponseException while downloading; generating a NoHttpResponse", e);
-                    response = new WebResponse(RESPONSE_DATA_NO_HTTP_RESPONSE, request, 0);
-                }
-                loadJob = new LoadJob(request, requestingWindow, target, response);
+                response = loadWebResponse(request);
             }
-            catch (final IOException e) {
-                throw new RuntimeException(e);
+            catch (final NoHttpResponseException e) {
+                LOG.error("NoHttpResponseException while downloading; generating a NoHttpResponse", e);
+                response = new WebResponse(RESPONSE_DATA_NO_HTTP_RESPONSE, request, 0);
             }
+            loadJob = new LoadJob(request, requestingWindow, target, response);
         }
+        catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+
         synchronized (loadQueue_) {
             loadQueue_.add(loadJob);
         }
@@ -2436,45 +2444,44 @@ public class WebClient implements Serializable, AutoCloseable {
                 if (LOG.isInfoEnabled()) {
                     LOG.info("No usage of download: " + loadJob);
                 }
+                continue;
             }
-            else {
-                final WebWindow win = openTargetWindow(loadJob.requestingWindow_, loadJob.target_, "_self");
-                if (loadJob.urlWithOnlyHashChange_ == null) {
-                    final Page pageBeforeLoad = win.getEnclosedPage();
-                    loadWebResponseInto(loadJob.response_, win);
 
-                    // start execution here.
-                    if (scriptEngine_ != null) {
-                        scriptEngine_.registerWindowAndMaybeStartEventLoop(win);
-                    }
+            final WebWindow win = openTargetWindow(loadJob.requestingWindow_, loadJob.target_, "_self");
+            final Page pageBeforeLoad = win.getEnclosedPage();
+            loadWebResponseInto(loadJob.response_, win);
 
-                    if (pageBeforeLoad != win.getEnclosedPage()) {
-                        updatedWindows.add(win);
-                    }
-
-                    // check and report problems if needed
-                    throwFailingHttpStatusCodeExceptionIfNecessary(loadJob.response_);
-                }
-                else {
-                    final Page page = loadJob.requestingWindow_.getEnclosedPage();
-                    final String oldURL = page.getUrl().toExternalForm();
-
-                    // update request url
-                    final WebRequest req = page.getWebResponse().getWebRequest();
-                    req.setUrl(loadJob.urlWithOnlyHashChange_);
-
-                    // update location.hash
-                    final Window jsWindow = win.getScriptableObject();
-                    if (null != jsWindow) {
-                        final Location location = jsWindow.getLocation();
-                        location.setHash(oldURL, loadJob.urlWithOnlyHashChange_.getRef());
-                    }
-
-                    // add to history
-                    win.getHistory().addPage(page);
-                }
+            // start execution here.
+            if (scriptEngine_ != null) {
+                scriptEngine_.registerWindowAndMaybeStartEventLoop(win);
             }
+
+            if (pageBeforeLoad != win.getEnclosedPage()) {
+                updatedWindows.add(win);
+            }
+
+            // check and report problems if needed
+            throwFailingHttpStatusCodeExceptionIfNecessary(loadJob.response_);
         }
+    }
+
+    private static void processOnlyHashChange(final WebWindow window, final URL urlWithOnlyHashChange) {
+        final Page page = window.getEnclosedPage();
+        final String oldURL = page.getUrl().toExternalForm();
+
+        // update request url
+        final WebRequest req = page.getWebResponse().getWebRequest();
+        req.setUrl(urlWithOnlyHashChange);
+
+        // update location.hash
+        final Window jsWindow = window.getScriptableObject();
+        if (null != jsWindow) {
+            final Location location = jsWindow.getLocation();
+            location.setHash(oldURL, urlWithOnlyHashChange.getRef());
+        }
+
+        // add to history
+        window.getHistory().addPage(page);
     }
 
     /**
@@ -2616,5 +2623,47 @@ public class WebClient implements Serializable, AutoCloseable {
      */
     public boolean isJavaScriptEngineEnabled() {
         return javaScriptEngineEnabled_;
+    }
+
+    /**
+     * Parses the given XHtml code string and loads the resulting XHtmlPage into
+     * the current window.
+     *
+     * @param htmlCode the html code as string
+     * @return the HtmlPage
+     * @throws IOException in case of error
+     */
+    public HtmlPage loadHtmlCodeIntoCurrentWindow(final String htmlCode) throws IOException {
+        final HTMLParser htmlParser = getPageCreator().getHtmlParser();
+        final WebWindow webWindow = getCurrentWindow();
+
+        final StringWebResponse webResponse =
+                new StringWebResponse(htmlCode, new URL("http://htmlunit.sourceforge.net/dummy.html"));
+        final HtmlPage page = new HtmlPage(webResponse, webWindow);
+        webWindow.setEnclosedPage(page);
+
+        htmlParser.parse(webResponse, page, true);
+        return page;
+    }
+
+    /**
+     * Parses the given XHtml code string and loads the resulting XHtmlPage into
+     * the current window.
+     *
+     * @param xhtmlCode the xhtml code as string
+     * @return the XHtmlPage
+     * @throws IOException in case of error
+     */
+    public XHtmlPage loadXHtmlCodeIntoCurrentWindow(final String xhtmlCode) throws IOException {
+        final HTMLParser htmlParser = getPageCreator().getHtmlParser();
+        final WebWindow webWindow = getCurrentWindow();
+
+        final StringWebResponse webResponse =
+                new StringWebResponse(xhtmlCode, new URL("http://htmlunit.sourceforge.net/dummy.html"));
+        final XHtmlPage page = new XHtmlPage(webResponse, webWindow);
+        webWindow.setEnclosedPage(page);
+
+        htmlParser.parse(webResponse, page, true);
+        return page;
     }
 }

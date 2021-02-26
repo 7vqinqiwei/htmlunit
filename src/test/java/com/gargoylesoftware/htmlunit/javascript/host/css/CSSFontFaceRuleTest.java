@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,6 @@ public class CSSFontFaceRuleTest extends WebDriverTestCase {
     @Test
     @Alerts(DEFAULT = {"[object CSSFontFaceRule]", "5",
                 "@font-face { font-family: Delicious; src: url(\"Delicious-Bold.otf\"); }"},
-            FF = {"[object CSSFontFaceRule]", "5",
-                "@font-face {\n  font-family: Delicious;\n  src: url(\"Delicious-Bold.otf\");\n}"},
             FF78 = {"[object CSSFontFaceRule]", "5",
                 "@font-face {\n  font-family: Delicious;\n  src: url(\"Delicious-Bold.otf\");\n}"},
             IE = {"[object CSSFontFaceRule]", "5",
@@ -68,7 +66,6 @@ public class CSSFontFaceRuleTest extends WebDriverTestCase {
      */
     @Test
     @Alerts(DEFAULT = "@font-face { font-family: Delicious; src: url(\"//:\"); }",
-            FF = "@font-face {\n  font-family: Delicious;\n  src: url(\"//:\");\n}",
             FF78 = "@font-face {\n  font-family: Delicious;\n  src: url(\"//:\");\n}",
             IE = "@font-face {\n\tfont-family: Delicious;\n\tsrc: url(//:);\n}\n")
     public void urlSlashSlashColon() throws Exception {
@@ -96,7 +93,6 @@ public class CSSFontFaceRuleTest extends WebDriverTestCase {
     @Test
     @Alerts(DEFAULT = "@font-face { font-family: Delicious; src: url(\"/:\"); }",
             FF78 = "@font-face {\n  font-family: Delicious;\n  src: url(\"/:\");\n}",
-            FF = "@font-face {\n  font-family: Delicious;\n  src: url(\"/:\");\n}",
             IE = "@font-face {\n\tfont-family: Delicious;\n\tsrc: url(/:);\n}\n")
     public void urlSlashColon() throws Exception {
         final String html
@@ -122,7 +118,6 @@ public class CSSFontFaceRuleTest extends WebDriverTestCase {
      */
     @Test
     @Alerts(DEFAULT = "@font-face { font-family: Delicious; src: url(\"//\"); }",
-            FF = "@font-face {\n  font-family: Delicious;\n  src: url(\"//\");\n}",
             FF78 = "@font-face {\n  font-family: Delicious;\n  src: url(\"//\");\n}",
             IE = "@font-face {\n\tfont-family: Delicious;\n\tsrc: url(//);\n}\n")
     public void urlSlashSlash() throws Exception {

@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.net.URL;
+import java.util.Map;
 
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.http.HttpStatus;
@@ -28,6 +29,8 @@ import org.openqa.selenium.WebDriver;
 
 import com.gargoylesoftware.htmlunit.BrowserRunner;
 import com.gargoylesoftware.htmlunit.BrowserRunner.Alerts;
+import com.gargoylesoftware.htmlunit.BrowserRunner.HtmlUnitNYI;
+import com.gargoylesoftware.htmlunit.HttpHeader;
 import com.gargoylesoftware.htmlunit.WebDriverTestCase;
 import com.gargoylesoftware.htmlunit.util.MimeType;
 
@@ -128,6 +131,36 @@ public class HtmlScript2Test extends WebDriverTestCase {
     }
 
     /**
+     * See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types#JavaScript_types.
+     * @exception Exception If the test fails
+     */
+    @Test
+    @Alerts({"1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G"})
+    public void typeValues() throws Exception {
+        final String html = "<html>\n"
+            + "<body>\n"
+            + "  <script type='application/javascript'>alert('1');</script>\n"
+            + "  <script type='application/ecmascript'>alert('2');</script>\n"
+            + "  <script type='application/x-ecmascript'>alert('3');</script>\n"
+            + "  <script type='application/x-javascript'>alert('4');</script>\n"
+            + "  <script type='text/javascript'>alert('5');</script>\n"
+            + "  <script type='text/ecmascript'>alert('6');</script>\n"
+            + "  <script type='text/javascript1.0'>alert('7');</script>\n"
+            + "  <script type='text/javascript1.1'>alert('8');</script>\n"
+            + "  <script type='text/javascript1.2'>alert('9');</script>\n"
+            + "  <script type='text/javascript1.3'>alert('A');</script>\n"
+            + "  <script type='text/javascript1.4'>alert('B');</script>\n"
+            + "  <script type='text/javascript1.5'>alert('C');</script>\n"
+            + "  <script type='text/jscript'>alert('D');</script>\n"
+            + "  <script type='text/livescript'>alert('E');</script>\n"
+            + "  <script type='text/x-ecmascript'>alert('F');</script>\n"
+            + "  <script type='text/x-javascript'>alert('G');</script>\n"
+            + "</body></html>";
+
+        loadPageWithAlerts2(html);
+    }
+
+    /**
      * @exception Exception If the test fails
      */
     @Test
@@ -179,15 +212,107 @@ public class HtmlScript2Test extends WebDriverTestCase {
      * @throws Exception if an error occurs
      */
     @Test
-    @Alerts({"deferred", "normal", "onload"})
-    public void defer() throws Exception {
-        final String html = "<html><head>\n"
-            + "<script defer>alert('deferred')</script>\n"
-            + "<script>alert('normal')</script>\n"
+    @Alerts({"deferred", "start", "dcl listener added", "end", "dcLoaded", "onload"})
+    public void deferInline() throws Exception {
+        final String html = "<html>\n"
+            + "<head>\n"
+            + "  <script defer>alert('deferred')</script>\n"
+            + "  <script>alert('start')</script>"
+            + "  <script>\n"
+            + "    document.addEventListener('DOMContentLoaded', function(event) { alert('dcLoaded') });\n"
+            + "    alert('dcl listener added')</script>"
+            + "  </script>\n"
             + "</head>\n"
-            + "<body onload='alert(\"onload\")'>test</body>\n"
+            + "<body onload='alert(\"onload\")'>\n"
+            + "</body>\n"
+            + "<script>alert('end')</script>\n"
             + "</html>";
 
+        loadPageWithAlerts2(html);
+    }
+
+    /**
+     * @throws Exception if an error occurs
+     */
+    @Test
+    @Alerts({"start", "dcl listener added", "end", "deferred-1", "deferred-2", "deferred-3", "dcLoaded", "onload"})
+    public void deferExternal() throws Exception {
+        final String html = "<html>\n"
+            + "<head>\n"
+            + "  <script defer src='script1.js'></script>\n"
+            + "  <script>alert('start')</script>"
+            + "  <script>\n"
+            + "    document.addEventListener('DOMContentLoaded', function(event) { alert('dcLoaded') });\n"
+            + "    alert('dcl listener added')</script>"
+            + "  </script>\n"
+            + "  <script defer src='script2.js'></script>\n"
+            + "</head>\n"
+            + "<body onload='alert(\"onload\")'>\n"
+            + "  <div id='abc'>Test</div>\n"
+            + "</body>\n"
+            + "<script defer src='script3.js'></script>\n"
+            + "<script>alert('end')</script>\n"
+            + "</html>";
+
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "script1.js"), "alert('deferred-1');");
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "script2.js"), "alert('deferred-2');");
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "script3.js"), "alert('deferred-3');");
+        loadPageWithAlerts2(html);
+    }
+
+
+    /**
+     * @throws Exception if an error occurs
+     */
+    @Test
+    @Alerts(DEFAULT = {"dcl listener added", "head-end", "end",
+                        "deferred-2", "deferred-1", "deferred-3", "dcLoaded", "onload"},
+            CHROME = {"dcl listener added", "head-end", "end",
+                        "deferred-1", "deferred-3", "dcLoaded", "deferred-2", "onload"},
+            EDGE = {"dcl listener added", "head-end", "end",
+                        "deferred-1", "deferred-3", "dcLoaded", "deferred-2", "onload"},
+            IE = {"dcl listener added", "head-end", "deferred-2", "end",
+                        "deferred-1", "deferred-3", "dcLoaded", "onload"})
+    @HtmlUnitNYI(CHROME = {"dcl listener added", "head-end", "end",
+                        "deferred-1", "deferred-2", "deferred-3", "dcLoaded", "onload"},
+            EDGE = {"dcl listener added", "head-end", "end",
+                        "deferred-1", "deferred-2", "deferred-3", "dcLoaded", "onload"},
+            FF = {"dcl listener added", "head-end", "end",
+                        "deferred-1", "deferred-2", "deferred-3", "dcLoaded", "onload"},
+            FF78 = {"dcl listener added", "head-end", "end",
+                        "deferred-1", "deferred-2", "deferred-3", "dcLoaded", "onload"},
+            IE = {"dcl listener added", "head-end", "end",
+                        "deferred-1", "deferred-2", "deferred-3", "dcLoaded", "onload"})
+    public void deferDynamicExternal() throws Exception {
+        final String html = "<html>\n"
+            + "<head>\n"
+            + "  <script>\n"
+            + "    document.addEventListener('DOMContentLoaded', function(event) { alert('dcLoaded') });\n"
+            + "    alert('dcl listener added')</script>"
+            + "  </script>\n"
+            + "  <script defer src='script1.js'></script>\n"
+            + "  <script>\n"
+            + "    head = document.getElementsByTagName('head')[0];\n"
+
+            + "    script = document.createElement('script');\n"
+            + "    script.setAttribute('defer', 'defer');\n"
+            + "    script.setAttribute('src', 'script2.js');\n"
+            + "    head.appendChild(script);\n"
+            + "  </script>\n"
+            + "  <script defer src='script3.js'></script>\n"
+            + "  <script>alert('head-end')</script>\n"
+            + "</head>\n"
+            + "<body onload='alert(\"onload\")'>\n"
+            + "  <div id='abc'>Test</div>\n"
+            + "</body>\n"
+            + "<script>alert('end')</script>\n"
+            + "</html>";
+
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "script1.js"), "alert('deferred-1');");
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "script2.js"), "alert('deferred-2');");
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "script3.js"), "alert('deferred-3');");
+
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "script1.js"), "alert('deferred-1');");
         loadPageWithAlerts2(html);
     }
 
@@ -624,4 +749,34 @@ public class HtmlScript2Test extends WebDriverTestCase {
         final WebDriver driver = loadPage2(html.toString());
         assertTitle(driver, getExpectedAlerts()[0]);
     }
+
+    /**
+     * Tests the 'Referer' HTTP header.
+     * @throws Exception on test failure
+     */
+    @Test
+    @Alerts("§§URL§§index.html?test")
+    public void refererHeader() throws Exception {
+        final String firstContent
+            = "<html><head><title>Page A</title></head>\n"
+            + "<body><script src='" + URL_SECOND + "'/></body>\n"
+            + "</html>";
+
+        final String secondContent = "var i = 7;";
+
+        expandExpectedAlertsVariables(URL_FIRST);
+
+        final URL indexUrl = new URL(URL_FIRST.toString() + "index.html");
+
+        getMockWebConnection().setResponse(indexUrl, firstContent);
+        getMockWebConnection().setResponse(URL_SECOND, secondContent);
+
+        loadPage2(firstContent, new URL(URL_FIRST.toString() + "index.html?test#ref"));
+
+        assertEquals(2, getMockWebConnection().getRequestCount());
+
+        final Map<String, String> lastAdditionalHeaders = getMockWebConnection().getLastAdditionalHeaders();
+        assertEquals(getExpectedAlerts()[0], lastAdditionalHeaders.get(HttpHeader.REFERER));
+    }
+
 }

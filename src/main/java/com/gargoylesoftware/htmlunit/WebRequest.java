@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.IDN;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -69,6 +70,7 @@ public class WebRequest implements Serializable {
     private Map<String, String> additionalHeaders_ = new HashMap<>();
     private Credentials urlCredentials_;
     private Credentials credentials_;
+    private int timeout_;
     private transient Charset charset_ = ISO_8859_1;
     private transient Set<HttpHint> httpHints_;
 
@@ -90,13 +92,14 @@ public class WebRequest implements Serializable {
         if (acceptEncodingHeader != null) {
             setAdditionalHeader(HttpHeader.ACCEPT_ENCODING, acceptEncodingHeader);
         }
+        timeout_ = -1;
     }
 
     /**
      * @return a new request for about:blank
      */
     public static WebRequest newAboutBlankRequest() {
-        return new WebRequest(WebClient.URL_ABOUT_BLANK, "*/*", "gzip, deflate");
+        return new WebRequest(UrlUtils.URL_ABOUT_BLANK, "*/*", "gzip, deflate");
     }
 
     /**
@@ -261,6 +264,21 @@ public class WebRequest implements Serializable {
     }
 
     /**
+     * @return the timeout to use
+     */
+    public int getTimeout() {
+        return timeout_;
+    }
+
+    /**
+     * Sets the timeout to use.
+     * @param timeout the timeout to use
+     */
+    public void setTimeout(final int timeout) {
+        timeout_ = timeout;
+    }
+
+    /**
      * Returns the form encoding type to use.
      * @return the form encoding type to use
      */
@@ -393,6 +411,23 @@ public class WebRequest implements Serializable {
             }
         }
         return additionalHeaders_.get(newKey);
+    }
+
+    /**
+     * Sets the referer HTTP header - only if the provided url is valid.
+     * @param url the url for the referer HTTP header
+     */
+    public void setRefererlHeader(final URL url) {
+        if (url == null || !url.getProtocol().startsWith("http")) {
+            return;
+        }
+
+        try {
+            setAdditionalHeader(HttpHeader.REFERER, UrlUtils.getUrlWithoutRef(url).toExternalForm());
+        }
+        catch (final MalformedURLException e) {
+            // bad luck us the whole url from the pager
+        }
     }
 
     /**

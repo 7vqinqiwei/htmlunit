@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -95,7 +95,6 @@ import com.gargoylesoftware.css.parser.selector.SimpleSelector;
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.Cache;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.HttpHeader;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebRequest;
 import com.gargoylesoftware.htmlunit.WebResponse;
@@ -301,7 +300,7 @@ public class CSSStyleSheet extends StyleSheet {
                 // Use href.
                 final BrowserVersion browser = client.getBrowserVersion();
                 request = new WebRequest(new URL(url), browser.getCssAcceptHeader(), browser.getAcceptEncodingHeader());
-                request.setAdditionalHeader(HttpHeader.REFERER, uri);
+                request.setRefererlHeader(page.getUrl());
 
                 // our cache is a bit strange;
                 // loadWebResponse check the cache for the web response
@@ -344,6 +343,12 @@ public class CSSStyleSheet extends StyleSheet {
             if (StringUtils.isEmpty(contentType) || MimeType.TEXT_CSS.equals(contentType)) {
 
                 final InputStream in = response.getContentAsStreamWithBomIfApplicable();
+                if (in == null) {
+                    if (LOG.isWarnEnabled()) {
+                        LOG.warn("Loading stylesheet for url '" + uri + "' returns empty responseData");
+                    }
+                    return new CSSStyleSheet(element, "", uri);
+                }
                 try {
                     Charset cssEncoding = Charset.forName("windows-1252");
                     final Charset contentCharset =
@@ -436,8 +441,19 @@ public class CSSStyleSheet extends StyleSheet {
         switch (selector.getSelectorType()) {
             case ELEMENT_NODE_SELECTOR:
                 final ElementSelector es = (ElementSelector) selector;
-                final String name = es.getLocalNameLowerCase();
-                if (name == null || name.equals(element.getLowercaseName())) {
+
+                final String name;
+                final String elementName;
+                if (element.getPage().hasCaseSensitiveTagNames()) {
+                    name = es.getLocalName();
+                    elementName = element.getLocalName();
+                }
+                else {
+                    name = es.getLocalNameLowerCase();
+                    elementName = element.getLowercaseName();
+                }
+
+                if (name == null || name.equals(elementName)) {
                     final List<Condition> conditions = es.getConditions();
                     if (conditions != null) {
                         for (final Condition condition : conditions) {
@@ -448,6 +464,7 @@ public class CSSStyleSheet extends StyleSheet {
                     }
                     return true;
                 }
+
                 return false;
 
             case CHILD_SELECTOR:
@@ -455,12 +472,12 @@ public class CSSStyleSheet extends StyleSheet {
                 if (parentNode == element.getPage()) {
                     return false;
                 }
-                if (!(parentNode instanceof HtmlElement)) {
+                if (!(parentNode instanceof DomElement)) {
                     return false; // for instance parent is a DocumentFragment
                 }
                 final ChildSelector cs = (ChildSelector) selector;
                 return selects(browserVersion, cs.getSimpleSelector(), element, pseudoElement, fromQuerySelectorAll)
-                    && selects(browserVersion, cs.getAncestorSelector(), (HtmlElement) parentNode,
+                    && selects(browserVersion, cs.getAncestorSelector(), (DomElement) parentNode,
                             pseudoElement, fromQuerySelectorAll);
 
             case DESCENDANT_SELECTOR:
@@ -472,8 +489,8 @@ public class CSSStyleSheet extends StyleSheet {
                         ancestor = ancestor.getParentNode();
                     }
                     final Selector dsAncestorSelector = ds.getAncestorSelector();
-                    while (ancestor instanceof HtmlElement) {
-                        if (selects(browserVersion, dsAncestorSelector, (HtmlElement) ancestor, pseudoElement,
+                    while (ancestor instanceof DomElement) {
+                        if (selects(browserVersion, dsAncestorSelector, (DomElement) ancestor, pseudoElement,
                                 fromQuerySelectorAll)) {
                             return true;
                         }
@@ -486,12 +503,12 @@ public class CSSStyleSheet extends StyleSheet {
                 final DirectAdjacentSelector das = (DirectAdjacentSelector) selector;
                 if (selects(browserVersion, das.getSimpleSelector(), element, pseudoElement, fromQuerySelectorAll)) {
                     DomNode prev = element.getPreviousSibling();
-                    while (prev != null && !(prev instanceof HtmlElement)) {
+                    while (prev != null && !(prev instanceof DomElement)) {
                         prev = prev.getPreviousSibling();
                     }
                     return prev != null
                             && selects(browserVersion, das.getSelector(),
-                                    (HtmlElement) prev, pseudoElement, fromQuerySelectorAll);
+                                    (DomElement) prev, pseudoElement, fromQuerySelectorAll);
                 }
                 return false;
 
@@ -500,8 +517,8 @@ public class CSSStyleSheet extends StyleSheet {
                 if (selects(browserVersion, gas.getSimpleSelector(), element, pseudoElement, fromQuerySelectorAll)) {
                     for (DomNode prev1 = element.getPreviousSibling(); prev1 != null;
                                                         prev1 = prev1.getPreviousSibling()) {
-                        if (prev1 instanceof HtmlElement
-                            && selects(browserVersion, gas.getSelector(), (HtmlElement) prev1,
+                        if (prev1 instanceof DomElement
+                            && selects(browserVersion, gas.getSelector(), (DomElement) prev1,
                                     pseudoElement, fromQuerySelectorAll)) {
                             return true;
                         }
@@ -576,12 +593,12 @@ public class CSSStyleSheet extends StyleSheet {
             case BEGIN_HYPHEN_ATTRIBUTE_CONDITION:
                 final String v = condition.getValue();
                 final String a = element.getAttribute(condition.getLocalName());
-                return selects(v, a, '-');
+                return selectsHyphenSeparated(v, a);
 
             case ONE_OF_ATTRIBUTE_CONDITION:
                 final String v2 = condition.getValue();
                 final String a2 = element.getAttribute(condition.getLocalName());
-                return selects(v2, a2, ' ');
+                return selectsOneOf(v2, a2);
 
             case LANG_CONDITION:
                 final String lcLang = condition.getValue();
@@ -607,7 +624,7 @@ public class CSSStyleSheet extends StyleSheet {
         }
     }
 
-    private static boolean selects(final String condition, final String attribute, final char separator) {
+    private static boolean selectsOneOf(final String condition, final String attribute) {
         // attribute.equals(condition)
         // || attribute.startsWith(condition + " ") || attriubte.endsWith(" " + condition)
         // || attribute.contains(" " + condition + " ");
@@ -622,18 +639,42 @@ public class CSSStyleSheet extends StyleSheet {
             return false;
         }
         if (attribLength > conditionLength) {
-            if (separator == attribute.charAt(conditionLength)
+            if (' ' == attribute.charAt(conditionLength)
                     && attribute.startsWith(condition)) {
                 return true;
             }
-            if (separator == attribute.charAt(attribLength - conditionLength - 1)
+            if (' ' == attribute.charAt(attribLength - conditionLength - 1)
                     && attribute.endsWith(condition)) {
                 return true;
             }
             if (attribLength + 1 > conditionLength) {
                 final StringBuilder tmp = new StringBuilder(conditionLength + 2);
-                tmp.append(separator).append(condition).append(separator);
+                tmp.append(' ').append(condition).append(' ');
                 return attribute.contains(tmp);
+            }
+            return false;
+        }
+        return attribute.equals(condition);
+    }
+
+    private static boolean selectsHyphenSeparated(final String condition, final String attribute) {
+        final int conditionLength = condition.length();
+        if (conditionLength < 1) {
+            if (attribute != ATTRIBUTE_NOT_DEFINED) {
+                final int attribLength = attribute.length();
+                return attribLength == 0 || '-' == attribute.charAt(0);
+            }
+            return false;
+        }
+
+        final int attribLength = attribute.length();
+        if (attribLength < conditionLength) {
+            return false;
+        }
+        if (attribLength > conditionLength) {
+            if ('-' == attribute.charAt(conditionLength)
+                    && attribute.startsWith(condition)) {
+                return true;
             }
             return false;
         }

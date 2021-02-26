@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -84,14 +84,28 @@ public final class ScriptElementSupport {
 
         if (!element.getPage().getWebClient().isJavaScriptEngineEnabled()) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("SvgScript found but not executed because javascript engine is disabled");
+                LOG.debug("Script found but not executed because javascript engine is disabled");
             }
+            return;
+        }
+
+        final ScriptElement script = (ScriptElement) element;
+        final String srcAttrib = script.getSrcAttribute();
+        if (ATTRIBUTE_NOT_DEFINED != srcAttrib
+                && script.isDeferred()) {
             return;
         }
 
         final WebWindow webWindow = element.getPage().getEnclosingWindow();
         if (webWindow != null) {
-            final PostponedAction action = new PostponedAction(element.getPage(), "Execution of script " + element) {
+            final StringBuilder description = new StringBuilder()
+                    .append("Execution of ")
+                    .append(srcAttrib == ATTRIBUTE_NOT_DEFINED ? "inline " : "external ")
+                    .append(element.getClass().getSimpleName());
+            if (srcAttrib != ATTRIBUTE_NOT_DEFINED) {
+                description.append(" (").append(srcAttrib).append(")");
+            }
+            final PostponedAction action = new PostponedAction(element.getPage(), description.toString()) {
                 @Override
                 public void execute() {
                     // see HTMLDocument.setExecutingDynamicExternalPosponed(boolean)
@@ -100,7 +114,7 @@ public final class ScriptElementSupport {
                     if (window != null) {
                         jsDoc = (HTMLDocument) window.getDocument();
                         jsDoc.setExecutingDynamicExternalPosponed(element.getStartLineNumber() == -1
-                                && ((ScriptElement) element).getSrcAttribute() != ATTRIBUTE_NOT_DEFINED);
+                                && srcAttrib != ATTRIBUTE_NOT_DEFINED);
                     }
                     try {
                         executeScriptIfNeeded(element);
@@ -266,13 +280,17 @@ public final class ScriptElementSupport {
         final String t = element.getAttributeDirect("type");
         final String l = element.getAttributeDirect("language");
         if (!isJavaScript(element, t, l)) {
-            LOG.warn("Script is not JavaScript (type: '" + t + "', language: '" + l + "'). Skipping execution.");
+            // Was at warn level before 2.46 but other types or tricky implementations with unsupported types
+            // are common out there and too many peoples out there thinking the is the root of problems.
+            // Browsers are also not warning about this.
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Script is not JavaScript (type: '" + t + "', language: '" + l + "'). Skipping execution.");
+            }
             return false;
         }
 
         // If the script's root ancestor node is not the page, then the script is not a part of the page.
         // If it isn't yet part of the page, don't execute the script; it's probably just being cloned.
-
         return element.getPage().isAncestorOf(element);
     }
 
@@ -295,17 +313,7 @@ public final class ScriptElementSupport {
         }
 
         if (StringUtils.isNotEmpty(typeAttribute)) {
-            if ("text/javascript".equalsIgnoreCase(typeAttribute)
-                    || "text/ecmascript".equalsIgnoreCase(typeAttribute)) {
-                return true;
-            }
-
-            if (MimeType.APPLICATION_JAVASCRIPT.equalsIgnoreCase(typeAttribute)
-                            || "application/ecmascript".equalsIgnoreCase(typeAttribute)
-                            || "application/x-javascript".equalsIgnoreCase(typeAttribute)) {
-                return true;
-            }
-            return false;
+            return MimeType.isJavascriptMimeType(typeAttribute);
         }
 
         if (StringUtils.isNotEmpty(languageAttribute)) {

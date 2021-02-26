@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,14 @@ package com.gargoylesoftware.htmlunit;
 
 import static com.gargoylesoftware.htmlunit.BrowserVersion.INTERNET_EXPLORER;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -53,6 +55,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -148,6 +151,12 @@ import com.gargoylesoftware.htmlunit.util.NameValuePair;
 public abstract class WebDriverTestCase extends WebTestCase {
 
     /**
+     * Function used in many tests.
+     */
+    public static final String LOG_TITLE_FUNCTION = "  function log(msg) { window.document.title += msg + '§';}\n";
+
+
+    /**
      * The system property for automatically fixing the test case expectations.
      */
     public static final String AUTOFIX_ = "htmlunit.autofix";
@@ -157,6 +166,7 @@ public abstract class WebDriverTestCase extends WebTestCase {
      */
     private static List<BrowserVersion> ALL_BROWSERS_ = Collections.unmodifiableList(
             Arrays.asList(BrowserVersion.CHROME,
+                    BrowserVersion.EDGE,
                     BrowserVersion.FIREFOX,
                     BrowserVersion.FIREFOX_78,
                     BrowserVersion.INTERNET_EXPLORER));
@@ -165,8 +175,10 @@ public abstract class WebDriverTestCase extends WebTestCase {
      * Browsers which run by default.
      */
     private static BrowserVersion[] DEFAULT_RUNNING_BROWSERS_ =
-        {BrowserVersion.CHROME, BrowserVersion.EDGE,
-            BrowserVersion.FIREFOX, BrowserVersion.FIREFOX_78,
+        {BrowserVersion.CHROME,
+            BrowserVersion.EDGE,
+            BrowserVersion.FIREFOX,
+            BrowserVersion.FIREFOX_78,
             BrowserVersion.INTERNET_EXPLORER};
 
     private static final Log LOG = LogFactory.getLog(WebDriverTestCase.class);
@@ -178,6 +190,8 @@ public abstract class WebDriverTestCase extends WebTestCase {
     private static String GECKO_BIN_;
     private static String FF_BIN_;
     private static String FF78_BIN_;
+
+    private static final String URL_FIRST_EXT = URL_FIRST.toExternalForm();
 
     /** The driver cache. */
     protected static final Map<BrowserVersion, WebDriver> WEB_DRIVERS_ = new HashMap<>();
@@ -465,7 +479,11 @@ public abstract class WebDriverTestCase extends WebTestCase {
 
                 final InternetExplorerOptions options = new InternetExplorerOptions();
                 options.ignoreZoomSettings();
-                return new InternetExplorerDriver(options);
+
+                // clear the cookies - seems to be not done by the driver
+                final InternetExplorerDriver ieDriver = new InternetExplorerDriver(options);
+                ieDriver.manage().deleteAllCookies();
+                return ieDriver;
             }
 
             if (BrowserVersion.EDGE == getBrowserVersion()) {
@@ -998,6 +1016,38 @@ public abstract class WebDriverTestCase extends WebTestCase {
      * and loads the page with this URL using the current WebDriver version; finally, asserts that the
      * alerts equal the expected alerts (in which "§§URL§§" has been expanded to the default URL).
      * @param html the HTML to use
+     * @return the web driver
+     * @throws Exception if something goes wrong
+     */
+    protected final WebDriver loadPageVerifyTitle2(final String html) throws Exception {
+        return loadPageVerifyTitle2(html, getExpectedAlerts());
+    }
+
+    protected final WebDriver loadPageVerifyTitle2(final String html, final String... expectedAlerts) throws Exception {
+        final WebDriver driver = loadPage2(html);
+        return verifyTitle2(driver, expectedAlerts);
+    }
+
+    protected final WebDriver verifyTitle2(final WebDriver driver,
+            final String... expectedAlerts) throws Exception {
+        if (expectedAlerts.length == 0) {
+            assertEquals("", driver.getTitle());
+        }
+        else {
+            final StringBuilder expected = new StringBuilder();
+            for (int i = 0; i < expectedAlerts.length; i++) {
+                expected.append(expectedAlerts[i].replaceAll("§§URL§§", URL_FIRST_EXT)).append('§');
+            }
+            assertEquals(expected.toString(), driver.getTitle());
+        }
+        return driver;
+    }
+
+    /**
+     * Defines the provided HTML as the response for {@link WebTestCase#URL_FIRST}
+     * and loads the page with this URL using the current WebDriver version; finally, asserts that the
+     * alerts equal the expected alerts (in which "§§URL§§" has been expanded to the default URL).
+     * @param html the HTML to use
      * @param maxWaitTime the maximum time to wait to get the alerts (in millis)
      * @return the web driver
      * @throws Exception if something goes wrong
@@ -1093,21 +1143,15 @@ public abstract class WebDriverTestCase extends WebTestCase {
             throws Exception {
         final List<String> actualAlerts = getCollectedAlerts(maxWaitTime, driver, expectedAlerts.length);
 
-        assertEquals(expectedAlerts, actualAlerts);
-        if (!ignoreExpectationsLength()) {
-            assertEquals(expectedAlerts.length, actualAlerts.size());
-            for (int i = expectedAlerts.length - 1; i >= 0; i--) {
+        assertEquals(expectedAlerts.length, actualAlerts.size());
+        for (int i = expectedAlerts.length - 1; i >= 0; i--) {
+            if (!useRealBrowser() && expectedAlerts[i].startsWith("data:image/png;base64,")) {
+                compareImages(expectedAlerts[i], actualAlerts.get(i));
+            }
+            else {
                 assertEquals(expectedAlerts[i], actualAlerts.get(i));
             }
         }
-    }
-
-    /**
-     * Whether the expectations length must match the actual length or this can be ignored.
-     * @return whether to ignore checking the expectations length against the actual one
-     */
-    protected boolean ignoreExpectationsLength() {
-        return false;
     }
 
     /**
@@ -1253,6 +1297,102 @@ public abstract class WebDriverTestCase extends WebTestCase {
     }
 
     /**
+     * Loads an expectation file for the specified browser search first for a browser specific resource
+     * and falling back in a general resource.
+     * @param resourcePrefix the start of the resource name
+     * @param resourceSuffix the end of the resource name
+     * @return the content of the file
+     * @throws Exception in case of error
+     */
+    protected String loadExpectation(final String resourcePrefix, final String resourceSuffix) throws Exception {
+        final Class<?> referenceClass = getClass();
+        final BrowserVersion browserVersion = getBrowserVersion();
+
+        String realBrowserNyiExpectation = null;
+        String realNyiExpectation = null;
+        final String browserExpectation;
+        final String expectation;
+        if (!useRealBrowser()) {
+            // first try nyi
+            final String browserSpecificNyiResource
+                    = resourcePrefix + "." + browserVersion.getNickname() + "_NYI" + resourceSuffix;
+            realBrowserNyiExpectation = loadContent(referenceClass.getResource(browserSpecificNyiResource));
+
+            // next nyi without browser
+            final String nyiResource = resourcePrefix + ".NYI" + resourceSuffix;
+            realNyiExpectation = loadContent(referenceClass.getResource(nyiResource));
+        }
+
+        // implemented - browser specific
+        final String browserSpecificResource = resourcePrefix + "." + browserVersion.getNickname() + resourceSuffix;
+        browserExpectation = loadContent(referenceClass.getResource(browserSpecificResource));
+
+        // implemented - all browsers
+        final String resource = resourcePrefix + resourceSuffix;
+        expectation = loadContent(referenceClass.getResource(resource));
+
+        // check for duplicates
+        if (realBrowserNyiExpectation != null) {
+            if (realNyiExpectation != null) {
+                Assert.assertNotEquals("Duplicate NYI Expectation for Browser " + browserVersion.getNickname(),
+                        realBrowserNyiExpectation, realNyiExpectation);
+            }
+
+            if (browserExpectation == null) {
+                if (expectation != null) {
+                    Assert.assertNotEquals("NYI Expectation matches the expected "
+                            + "result for Browser " + browserVersion.getNickname(),
+                            realBrowserNyiExpectation, expectation);
+                }
+            }
+            else {
+                Assert.assertNotEquals("NYI Expectation matches the expected "
+                        + "browser specific result for Browser " + browserVersion.getNickname(),
+                        realBrowserNyiExpectation, browserExpectation);
+            }
+
+            return realBrowserNyiExpectation;
+        }
+
+        if (realNyiExpectation != null) {
+            if (browserExpectation == null) {
+                if (expectation != null) {
+                    Assert.assertNotEquals("NYI Expectation matches the expected "
+                            + "result for Browser " + browserVersion.getNickname(),
+                            realNyiExpectation, expectation);
+                }
+            }
+            else {
+                Assert.assertNotEquals("NYI Expectation matches the expected "
+                        + "browser specific result for Browser " + browserVersion.getNickname(),
+                        realNyiExpectation, browserExpectation);
+            }
+            return realNyiExpectation;
+        }
+
+        if (browserExpectation != null) {
+            if (expectation != null) {
+                Assert.assertNotEquals("Browser specific NYI Expectation matches the expected "
+                        + "result for Browser " + browserVersion.getNickname(),
+                        browserExpectation, expectation);
+            }
+            return browserExpectation;
+        }
+        return expectation;
+    }
+
+    private static String loadContent(final URL url) throws URISyntaxException, IOException {
+        if (url == null) {
+            return null;
+        }
+
+        final File file = new File(url.toURI());
+        String content = FileUtils.readFileToString(file, UTF_8);
+        content = StringUtils.replace(content, "\r\n", "\n");
+        return content;
+    }
+
+    /**
      * Reads the number of JS threads remaining from unit tests run before.
      * This should be always 0, if {@link #isWebClientCached()} is {@code false}.
      * @throws InterruptedException in case of problems
@@ -1291,7 +1431,7 @@ public abstract class WebDriverTestCase extends WebTestCase {
     }
 
     // limit resource usage
-    private Server buildServer(final int port) {
+    private static Server buildServer(final int port) {
         final QueuedThreadPool threadPool = new QueuedThreadPool(5, 2);
 
         final Server server = new Server(threadPool);

@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -168,20 +168,20 @@ public class HttpWebConnection implements WebConnection {
      * {@inheritDoc}
      */
     @Override
-    public WebResponse getResponse(final WebRequest request) throws IOException {
-        final HttpClientBuilder builder = reconfigureHttpClientIfNeeded(getHttpClientBuilder());
+    public WebResponse getResponse(final WebRequest webRequest) throws IOException {
+        final HttpClientBuilder builder = reconfigureHttpClientIfNeeded(getHttpClientBuilder(), webRequest);
 
         HttpUriRequest httpMethod = null;
         try {
             try {
-                httpMethod = makeHttpMethod(request, builder);
+                httpMethod = makeHttpMethod(webRequest, builder);
             }
             catch (final URISyntaxException e) {
-                throw new IOException("Unable to create URI from URL: " + request.getUrl().toExternalForm()
+                throw new IOException("Unable to create URI from URL: " + webRequest.getUrl().toExternalForm()
                         + " (reason: " + e.getMessage() + ")", e);
             }
 
-            final URL url = request.getUrl();
+            final URL url = webRequest.getUrl();
             final HttpHost httpHost = new HttpHost(url.getHost(), url.getPort(), url.getProtocol());
             final long startTime = System.currentTimeMillis();
 
@@ -215,7 +215,7 @@ public class HttpWebConnection implements WebConnection {
 
             final DownloadedContent downloadedBody = downloadResponseBody(httpResponse);
             final long endTime = System.currentTimeMillis();
-            return makeWebResponse(httpResponse, request, downloadedBody, endTime - startTime);
+            return makeWebResponse(httpResponse, webRequest, downloadedBody, endTime - startTime);
         }
         finally {
             if (httpMethod != null) {
@@ -250,7 +250,7 @@ public class HttpWebConnection implements WebConnection {
 
     private void setProxy(final HttpRequestBase httpRequest, final WebRequest webRequest) {
         final InetAddress localAddress = webClient_.getOptions().getLocalAddress();
-        final RequestConfig.Builder requestBuilder = createRequestConfigBuilder(getTimeout(), localAddress);
+        final RequestConfig.Builder requestBuilder = createRequestConfigBuilder(getTimeout(webRequest), localAddress);
 
         if (webRequest.getProxyHost() == null) {
             requestBuilder.setProxy(null);
@@ -559,10 +559,15 @@ public class HttpWebConnection implements WebConnection {
      * Returns the timeout to use for socket and connection timeouts for HttpConnectionManager.
      * Is overridden to 0 by StreamingWebConnection which keeps reading after a timeout and
      * must have long running connections explicitly terminated.
+     * @param webRequest the request might have his own timeout
      * @return the WebClient's timeout
      */
-    protected int getTimeout() {
-        return webClient_.getOptions().getTimeout();
+    protected int getTimeout(final WebRequest webRequest) {
+        if (webRequest == null || webRequest.getTimeout() < 0) {
+            return webClient_.getOptions().getTimeout();
+        }
+
+        return webRequest.getTimeout();
     }
 
     /**
@@ -576,7 +581,7 @@ public class HttpWebConnection implements WebConnection {
     protected HttpClientBuilder createHttpClientBuilder() {
         final HttpClientBuilder builder = HttpClientBuilder.create();
         builder.setRedirectStrategy(new HtmlUnitRedirectStrategie());
-        configureTimeout(builder, getTimeout());
+        configureTimeout(builder, getTimeout(null));
         configureHttpsScheme(builder);
         builder.setMaxConnPerRoute(6);
 
@@ -619,7 +624,8 @@ public class HttpWebConnection implements WebConnection {
      * React on changes that may have occurred on the WebClient settings.
      * Registering as a listener would be probably better.
      */
-    private HttpClientBuilder reconfigureHttpClientIfNeeded(final HttpClientBuilder httpClientBuilder) {
+    private HttpClientBuilder reconfigureHttpClientIfNeeded(final HttpClientBuilder httpClientBuilder,
+            final WebRequest webRequest) {
         final WebClientOptions options = webClient_.getOptions();
 
         // register new SSL factory only if settings have changed
@@ -637,7 +643,7 @@ public class HttpWebConnection implements WebConnection {
             }
         }
 
-        final int timeout = getTimeout();
+        final int timeout = getTimeout(webRequest);
         if (timeout != usedOptions_.getTimeout()) {
             configureTimeout(httpClientBuilder, timeout);
         }
@@ -710,7 +716,7 @@ public class HttpWebConnection implements WebConnection {
      * Converts an HttpMethod into a WebResponse.
      */
     private WebResponse makeWebResponse(final HttpResponse httpResponse,
-            final WebRequest request, final DownloadedContent responseBody, final long loadTime) {
+            final WebRequest webRequest, final DownloadedContent responseBody, final long loadTime) {
 
         String statusMessage = httpResponse.getStatusLine().getReasonPhrase();
         if (statusMessage == null) {
@@ -722,7 +728,7 @@ public class HttpWebConnection implements WebConnection {
             headers.add(new NameValuePair(header.getName(), header.getValue()));
         }
         final WebResponseData responseData = new WebResponseData(responseBody, statusCode, statusMessage, headers);
-        return newWebResponseInstance(responseData, loadTime, request);
+        return newWebResponseInstance(responseData, loadTime, webRequest);
     }
 
     /**
@@ -790,15 +796,15 @@ public class HttpWebConnection implements WebConnection {
      * Constructs an appropriate WebResponse.
      * May be overridden by subclasses to return a specialized WebResponse.
      * @param responseData Data that was send back
-     * @param request the request used to get this response
+     * @param webRequest the request used to get this response
      * @param loadTime How long the response took to be sent
      * @return the new WebResponse
      */
     protected WebResponse newWebResponseInstance(
             final WebResponseData responseData,
             final long loadTime,
-            final WebRequest request) {
-        return new WebResponse(responseData, request, loadTime);
+            final WebRequest webRequest) {
+        return new WebResponse(responseData, webRequest, loadTime);
     }
 
     private List<HttpRequestInterceptor> getHttpRequestInterceptors(final WebRequest webRequest) {
@@ -814,84 +820,80 @@ public class HttpWebConnection implements WebConnection {
         }
 
         // make sure the headers are added in the right order
-        final String userAgent = webClient_.getBrowserVersion().getUserAgent();
         final String[] headerNames = webClient_.getBrowserVersion().getHeaderNamesOrdered();
-        if (headerNames == null) {
-            list.add(new UserAgentHeaderHttpRequestInterceptor(userAgent));
-            list.add(new RequestAddCookies());
-            list.add(new RequestClientConnControl());
-        }
-        else {
-            for (final String header : headerNames) {
-                if (HttpHeader.HOST.equals(header)) {
-                    list.add(new HostHeaderHttpRequestInterceptor(host.toString()));
+        for (final String header : headerNames) {
+            if (HttpHeader.HOST.equals(header)) {
+                list.add(new HostHeaderHttpRequestInterceptor(host.toString()));
+            }
+            else if (HttpHeader.USER_AGENT.equals(header)) {
+                String headerValue = webRequest.getAdditionalHeader(HttpHeader.USER_AGENT);
+                if (headerValue == null) {
+                    headerValue = webClient_.getBrowserVersion().getUserAgent();
                 }
-                else if (HttpHeader.USER_AGENT.equals(header)) {
-                    list.add(new UserAgentHeaderHttpRequestInterceptor(userAgent));
+                list.add(new UserAgentHeaderHttpRequestInterceptor(headerValue));
+            }
+            else if (HttpHeader.ACCEPT.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.ACCEPT);
+                if (headerValue != null) {
+                    list.add(new AcceptHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.ACCEPT.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new AcceptHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.ACCEPT_LANGUAGE.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.ACCEPT_LANGUAGE);
+                if (headerValue != null) {
+                    list.add(new AcceptLanguageHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.ACCEPT_LANGUAGE.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new AcceptLanguageHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.ACCEPT_ENCODING.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.ACCEPT_ENCODING);
+                if (headerValue != null) {
+                    list.add(new AcceptEncodingHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.ACCEPT_ENCODING.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new AcceptEncodingHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.SEC_FETCH_DEST.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.SEC_FETCH_DEST);
+                if (headerValue != null) {
+                    list.add(new SecFetchDestHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.SEC_FETCH_DEST.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new SecFetchDestHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.SEC_FETCH_MODE.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.SEC_FETCH_MODE);
+                if (headerValue != null) {
+                    list.add(new SecFetchModeHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.SEC_FETCH_MODE.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new SecFetchModeHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.SEC_FETCH_SITE.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.SEC_FETCH_SITE);
+                if (headerValue != null) {
+                    list.add(new SecFetchSiteHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.SEC_FETCH_SITE.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new SecFetchSiteHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.SEC_FETCH_USER.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.SEC_FETCH_USER);
+                if (headerValue != null) {
+                    list.add(new SecFetchUserHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.SEC_FETCH_USER.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new SecFetchUserHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.UPGRADE_INSECURE_REQUESTS.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.UPGRADE_INSECURE_REQUESTS);
+                if (headerValue != null) {
+                    list.add(new UpgradeInsecureRequestHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.UPGRADE_INSECURE_REQUESTS.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new UpgradeInsecureRequestHeaderHttpRequestInterceptor(headerValue));
-                    }
+            }
+            else if (HttpHeader.REFERER.equals(header)) {
+                final String headerValue = webRequest.getAdditionalHeader(HttpHeader.REFERER);
+                if (headerValue != null) {
+                    list.add(new RefererHeaderHttpRequestInterceptor(headerValue));
                 }
-                else if (HttpHeader.REFERER.equals(header)) {
-                    final String headerValue = webRequest.getAdditionalHeader(header);
-                    if (headerValue != null) {
-                        list.add(new RefererHeaderHttpRequestInterceptor(headerValue));
-                    }
-                }
-                else if (HttpHeader.CONNECTION.equals(header)) {
-                    list.add(new RequestClientConnControl());
-                }
-                else if (HttpHeader.COOKIE.equals(header)) {
-                    list.add(new RequestAddCookies());
-                }
-                else if (HttpHeader.DNT.equals(header) && webClient_.getOptions().isDoNotTrackEnabled()) {
-                    list.add(new DntHeaderHttpRequestInterceptor("1"));
-                }
+            }
+            else if (HttpHeader.CONNECTION.equals(header)) {
+                list.add(new RequestClientConnControl());
+            }
+            else if (HttpHeader.COOKIE.equals(header)) {
+                list.add(new RequestAddCookies());
+            }
+            else if (HttpHeader.DNT.equals(header) && webClient_.getOptions().isDoNotTrackEnabled()) {
+                list.add(new DntHeaderHttpRequestInterceptor("1"));
             }
         }
 

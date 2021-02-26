@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,9 +15,11 @@
 package com.gargoylesoftware.htmlunit;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.fail;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,11 +32,16 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -48,7 +55,13 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
+
+import com.github.romankh3.image.comparison.ImageComparison;
+import com.github.romankh3.image.comparison.ImageComparisonUtil;
+import com.github.romankh3.image.comparison.model.ImageComparisonResult;
+import com.github.romankh3.image.comparison.model.ImageComparisonState;
 
 /**
  * Common superclass for HtmlUnit tests.
@@ -63,6 +76,12 @@ import org.junit.rules.TestRule;
  * @author Ronald Brill
  */
 public abstract class WebTestCase {
+
+    /**
+     * Make the test method name available to the tests.
+     */
+    @Rule
+    public TestName testMethodName_ = new TestName();
 
     /** Logging support. */
     private static final Log LOG = LogFactory.getLog(WebTestCase.class);
@@ -717,38 +736,6 @@ public abstract class WebTestCase {
     }
 
     /**
-     * Loads an expectation file for the specified browser search first for a browser specific resource
-     * and falling back in a general resource.
-     * @param resourcePrefix the start of the resource name
-     * @param resourceSuffix the end of the resource name
-     * @return the content of the file
-     * @throws Exception in case of error
-     */
-    protected String loadExpectation(final String resourcePrefix, final String resourceSuffix) throws Exception {
-        final URL url = getExpectationsResource(getClass(), getBrowserVersion(), resourcePrefix, resourceSuffix);
-        assertNotNull(url);
-        final File file = new File(url.toURI());
-
-        String content = FileUtils.readFileToString(file, UTF_8);
-        content = StringUtils.replace(content, "\r\n", "\n");
-        return content;
-    }
-
-    private static URL getExpectationsResource(final Class<?> referenceClass, final BrowserVersion browserVersion,
-            final String resourcePrefix, final String resourceSuffix) {
-        final String browserSpecificResource = resourcePrefix + "." + browserVersion.getNickname() + resourceSuffix;
-
-        final URL url = referenceClass.getResource(browserSpecificResource);
-        if (url != null) {
-            return url;
-        }
-
-        // fall back: expectations for all browsers
-        final String resource = resourcePrefix + resourceSuffix;
-        return referenceClass.getResource(resource);
-    }
-
-    /**
      * Gets the active JavaScript threads.
      * @return the threads
      */
@@ -777,4 +764,61 @@ public abstract class WebTestCase {
         return IOUtils.toString(stream, ISO_8859_1);
     }
 
+    protected void compareImages(final String expected, final String current) throws IOException {
+        final String currentBase64Image = current.split(",")[1];
+        final byte[] currentImageBytes = Base64.getDecoder().decode(currentBase64Image);
+
+        try (ByteArrayInputStream currentBis = new ByteArrayInputStream(currentImageBytes)) {
+            final BufferedImage currentImage = ImageIO.read(currentBis);
+
+            compareImages(expected, currentImage);
+        }
+    }
+
+    protected void compareImages(final String expected, final BufferedImage currentImage) throws IOException {
+        final String expectedBase64Image = expected.split(",")[1];
+        final byte[] expectedImageBytes = Base64.getDecoder().decode(expectedBase64Image);
+
+        try (ByteArrayInputStream expectedBis = new ByteArrayInputStream(expectedImageBytes)) {
+            final BufferedImage expectedImage = ImageIO.read(expectedBis);
+
+            final ImageComparison imageComparison = new ImageComparison(expectedImage, currentImage);
+            // imageComparison.setMinimalRectangleSize(10);
+            imageComparison.setPixelToleranceLevel(0.2);
+            imageComparison.setAllowingPercentOfDifferentPixels(7);
+
+            final ImageComparisonResult imageComparisonResult = imageComparison.compareImages();
+            final ImageComparisonState imageComparisonState = imageComparisonResult.getImageComparisonState();
+
+            if (ImageComparisonState.SIZE_MISMATCH == imageComparisonState) {
+                final String dir = "target/" + testMethodName_.getMethodName();
+                Files.createDirectories(Paths.get(dir));
+
+                final File expectedOut = new File(dir, "expected.png");
+                final File currentOut = new File(dir, "current.png");
+                ImageComparisonUtil.saveImage(expectedOut, expectedImage);
+                ImageComparisonUtil.saveImage(currentOut, currentImage);
+
+                fail("The images are differnet in size - "
+                        + "expected: " + expectedImage.getWidth() + "x" + expectedImage.getHeight()
+                        + " current: " + currentImage.getWidth() + "x" + currentImage.getHeight()
+                        + " (expected: " + expectedOut.getAbsolutePath()
+                            + " current: " + currentOut.getAbsolutePath() + ")");
+            }
+            else if (ImageComparisonState.MISMATCH == imageComparisonState) {
+                final String dir = "target/" + testMethodName_.getMethodName();
+                Files.createDirectories(Paths.get(dir));
+
+                final File expectedOut = new File(dir, "expected.png");
+                final File currentOut = new File(dir, "current.png");
+                final File differenceOut = new File(dir, "difference.png");
+                ImageComparisonUtil.saveImage(expectedOut, expectedImage);
+                ImageComparisonUtil.saveImage(currentOut, currentImage);
+                ImageComparisonUtil.saveImage(differenceOut, imageComparisonResult.getResult());
+                fail("The images are differnet (expected: " + expectedOut.getAbsolutePath()
+                            + " current: " + currentOut.getAbsolutePath()
+                            + " difference: " + differenceOut.getAbsolutePath() + ")");
+            }
+        }
+    }
 }

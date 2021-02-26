@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -80,11 +80,21 @@ public interface RenderingBackend {
      * Draws images onto the context.
      *
      * @param imageReader the reader to read the image from 8the first one)
-     * @param dxI the x coordinate of the starting point (top left)
-     * @param dyI the y coordinate of the starting point (top left)
+     * @param sx the X coordinate of the top left corner of the sub-rectangle of the source image
+     *        to draw into the destination context
+     * @param sy the Y coordinate of the top left corner of the sub-rectangle of the source image
+     *        to draw into the destination context
+     * @param sWidth the width of the sub-rectangle of the source image to draw into the destination context
+     * @param sHeight the height of the sub-rectangle of the source image to draw into the destination context
+     * @param dx the X coordinate in the destination canvas at which to place the top-left corner of the source image
+     * @param dy the Y coordinate in the destination canvas at which to place the top-left corner of the source image
+     * @param dWidth the width to draw the image in the destination canvas. This allows scaling of the drawn image
+     * @param dHeight the height to draw the image in the destination canvas. This allows scaling of the drawn image
      * @throws IOException in case o problems
      */
-    void drawImage(ImageReader imageReader, int dxI, int dyI) throws IOException;
+    void drawImage(ImageReader imageReader,
+            int sx, int sy, Integer sWidth, Integer sHeight,
+            int dx, int dy, Integer dWidth, Integer dHeight) throws IOException;
 
     /**
      * Constructs a base64 encoded string out of the image data.

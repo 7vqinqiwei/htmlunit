@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import org.junit.runner.RunWith;
 
 import com.gargoylesoftware.htmlunit.BrowserRunner;
 import com.gargoylesoftware.htmlunit.BrowserRunner.Alerts;
+import com.gargoylesoftware.htmlunit.BrowserRunner.HtmlUnitNYI;
 import com.gargoylesoftware.htmlunit.BrowserRunner.NotYetImplemented;
 import com.gargoylesoftware.htmlunit.WebDriverTestCase;
 
@@ -32,9 +33,41 @@ import com.gargoylesoftware.htmlunit.WebDriverTestCase;
  *
  * @author Ahmed Ashour
  * @author Ronald Brill
+ * @author Atsushi Nakagawa
  */
 @RunWith(BrowserRunner.class)
 public class SubtleCryptoTest extends WebDriverTestCase {
+
+    /**
+     * Methods in SubtleCrypto should always wraps errors in a Promise and never throw directly.
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts(DEFAULT = "TypeError true",
+            IE = {})
+    @HtmlUnitNYI(CHROME = "TypeError false",
+            EDGE = "TypeError false",
+            FF = "TypeError false",
+            FF78 = "TypeError false")
+    public void unsupportedCall() throws Exception {
+        final String html
+            = ""
+            + "<html><head><script>\n"
+            + "  function test() {\n"
+            + "    if (window.crypto) {\n"
+            + "      window.crypto.subtle.generateKey(\n"
+            + "        { name: 'x' }\n"
+            + "      )\n"
+            + "      .catch(function(e) {\n"
+            + "        alert('TypeError ' + (e instanceof TypeError));\n"
+            + "      });\n"
+            + "    }\n"
+            + "  }\n"
+            + "</script></head><body onload='test()'>\n"
+            + "</body></html>";
+
+        loadPageWithAlerts2(html, URL_FIRST, DEFAULT_WAIT_TIME * 3);
+    }
 
     /**
      * @throws Exception if the test fails

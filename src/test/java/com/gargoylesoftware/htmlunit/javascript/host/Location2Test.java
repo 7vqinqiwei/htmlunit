@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,12 +26,14 @@ import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoAlertPresentException;
 import org.openqa.selenium.WebDriver;
 
 import com.gargoylesoftware.htmlunit.BrowserRunner;
 import com.gargoylesoftware.htmlunit.BrowserRunner.Alerts;
 import com.gargoylesoftware.htmlunit.BrowserRunner.BuggyWebDriver;
+import com.gargoylesoftware.htmlunit.BrowserRunner.HtmlUnitNYI;
 import com.gargoylesoftware.htmlunit.BrowserRunner.NotYetImplemented;
 import com.gargoylesoftware.htmlunit.HttpHeader;
 import com.gargoylesoftware.htmlunit.HttpMethod;
@@ -50,6 +52,7 @@ import com.gargoylesoftware.htmlunit.util.NameValuePair;
  * @author Ahmed Ashour
  * @author Ronald Brill
  * @author Frank Danek
+ * @author Atsushi Nakagawa
  */
 @RunWith(BrowserRunner.class)
 public class Location2Test extends WebDriverTestCase {
@@ -142,7 +145,79 @@ public class Location2Test extends WebDriverTestCase {
             + "  alert(location.search);\n"
             + "}\n</script></head>\n"
             + "<body onload='doTest()'>\n"
-            + "<iframe src='about:blank'></iframe></body></html>";
+            + "  <iframe src='about:blank'></iframe>\n"
+            + "</body>\n"
+            + "</html>";
+
+        loadPageWithAlerts2(html);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts(DEFAULT = {"#hash", "about:blank?query#hash", "blank", "", "about:", "?query"},
+            FF = "exception",
+            FF78 = "exception",
+            IE = "exception")
+    @HtmlUnitNYI(FF = {"", "about:blank", "blank", "", "about:", ""},
+            FF78 = {"", "about:blank", "blank", "", "about:", ""},
+            IE = {"", "about:blank", "/blank", "", "about:", ""})
+    public void about_blank_query_hash_attributes() throws Exception {
+        final String html = "<html>\n"
+            + "<head>\n"
+            + "  <script>\n"
+            + "    function doTest() {\n"
+            + "      try {\n"
+            + "        var doc = frames[0].document;\n"
+            + "        var location = doc.location;\n"
+            + "        alert(location.hash);\n"
+            + "        alert(location.href);\n"
+            + "        alert(location.pathname);\n"
+            + "        alert(location.port);\n"
+            + "        alert(location.protocol);\n"
+            + "        alert(location.search);\n"
+            + "      } catch(e) { alert('exception'); }\n"
+            + "    }\n"
+            + "  </script>\n"
+            + "</head>\n"
+            + "<body onload='doTest()'>\n"
+            + "  <iframe src='about:blank?query#hash'></iframe>\n"
+            + "</body>\n"
+            + "</html>";
+
+        loadPageWithAlerts2(html);
+    }
+
+    /**
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts(DEFAULT = {"", "about:blank", "#foo", "about:blank#foo"},
+            IE = {"", "about:blank", "", "about:blank"})
+    @HtmlUnitNYI(IE = {"", "about:blank", "#foo", "about:blank#foo"})
+    public void about_blank_set_hash() throws Exception {
+        final String html = "<html>\n"
+            + "<head>\n"
+            + "  <script>\n"
+            + "    function doTest() {\n"
+            + "      try {\n"
+            + "        var doc = frames[0].document;\n"
+            + "        var location = doc.location;\n"
+
+            + "        alert(location.hash);\n"
+            + "        alert(location.href);\n"
+            + "        location.hash = 'foo';\n"
+            + "        alert(location.hash);\n"
+            + "        alert(location.href);\n"
+            + "      } catch(e) { alert('exception'); }\n"
+            + "    }\n"
+            + "  </script>\n"
+            + "</head>\n"
+            + "<body onload='doTest()'>\n"
+            + "  <iframe src='about:blank'></iframe>\n"
+            + "</body>\n"
+            + "</html>";
 
         loadPageWithAlerts2(html);
     }
@@ -970,5 +1045,58 @@ public class Location2Test extends WebDriverTestCase {
         assertEquals(getExpectedAlerts()[1], "" + additionalHeaders.get(HttpHeader.ORIGIN));
         assertEquals(getExpectedAlerts()[2], additionalHeaders.get(HttpHeader.REFERER));
         assertEquals("localhost:" + PORT, additionalHeaders.get(HttpHeader.HOST));
+    }
+
+    /**
+     * Tests that location.reload() works correctly when invoked across frames.
+     * @throws Exception if the test fails
+     */
+    @Test
+    @Alerts({"§§URL§§upper.html", "§§URL§§lower.html"})
+    public void reloadAcrossFrames() throws Exception {
+        final String framesetContent = ""
+            + "<html>\n"
+            + "  <frameset rows='100,*'>\n"
+            + "    <frame name='upper' src='upper.html'/>\n"
+            + "    <frame name='lower' src='lower.html'/>\n"
+            + "  </frameset>\n"
+            + "</html>";
+
+        final String upperContent = "<html><body><h1>upper</h1></body></html>";
+        final String lowerContent = ""
+            + "<html><head>\n"
+            + "<script>\n"
+            + "function test() {\n"
+            + "  parent.upper.location.reload();\n"
+            + "}\n"
+            + "</script>\n"
+            + "</head>\n"
+            + "<body><h1>lower</h1><button id='tester' onclick='test()'>test</button></body></html>";
+
+        getMockWebConnection().setResponse(URL_FIRST, framesetContent);
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "upper.html"), upperContent);
+        getMockWebConnection().setResponse(new URL(URL_FIRST, "lower.html"), lowerContent);
+
+        final WebDriver driver = loadPage2(framesetContent, URL_FIRST);
+
+        expandExpectedAlertsVariables(URL_FIRST);
+        driver.switchTo().frame("upper");
+        assertEquals(getExpectedAlerts()[0],
+                ((JavascriptExecutor) driver).executeScript("return document.location.href"));
+        driver.switchTo().defaultContent();
+        driver.switchTo().frame("lower");
+        assertEquals(getExpectedAlerts()[1],
+                ((JavascriptExecutor) driver).executeScript("return document.location.href"));
+
+        driver.findElement(By.id("tester")).click();
+
+        driver.switchTo().defaultContent();
+        driver.switchTo().frame("upper");
+        assertEquals(getExpectedAlerts()[0],
+                ((JavascriptExecutor) driver).executeScript("return document.location.href"));
+        driver.switchTo().defaultContent();
+        driver.switchTo().frame("lower");
+        assertEquals(getExpectedAlerts()[1],
+                ((JavascriptExecutor) driver).executeScript("return document.location.href"));
     }
 }

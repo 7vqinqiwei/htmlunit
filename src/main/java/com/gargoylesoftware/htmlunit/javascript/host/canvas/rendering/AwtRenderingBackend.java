@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +17,8 @@ package com.gargoylesoftware.htmlunit.javascript.host.canvas.rendering;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Composite;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -257,6 +259,9 @@ public class AwtRenderingBackend implements RenderingBackend {
         setGlobalAlpha(1.0);
         graphics2D_.setClip(null);
 
+        final Font font = new Font("SansSerif", Font.PLAIN, 10);
+        graphics2D_.setFont(font);
+
         graphics2D_.setBackground(new Color(0f, 0f, 0f, 0f));
         graphics2D_.setColor(Color.black);
         graphics2D_.clearRect(0, 0, imageWidth, imageHeight);
@@ -387,18 +392,26 @@ public class AwtRenderingBackend implements RenderingBackend {
             LOG.debug("[" + id_ + "] clearRect(" + x + ", " + y + ", " + w + ", " + h + ")");
         }
 
-        graphics2D_.setColor(Color.WHITE);
+        final Composite saved = graphics2D_.getComposite();
+
+        graphics2D_.setColor(Color.BLACK);
+        graphics2D_.setComposite(AlphaComposite.Clear); // overpaint
         final Rectangle2D rect = new Rectangle2D.Double(x, y, w, h);
         graphics2D_.fill(transformation_.createTransformedShape(rect));
+
+        graphics2D_.setComposite(saved);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void drawImage(final ImageReader imageReader, final int dxI, final int dyI) throws IOException {
+    public void drawImage(final ImageReader imageReader,
+            final int sx, final int sy, final Integer sWidth, final Integer sHeight,
+            final int dx, final int dy, final Integer dWidth, final Integer dHeight) throws IOException {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("[" + id_ + "] drawImage()");
+            LOG.debug("[" + id_ + "] drawImage(" + sx + ", " + sy + ", " + sWidth + ", " + sHeight
+                    + "," + dx + ", " + dy + ", " + dWidth + ", " + dHeight + ")");
         }
 
         if (imageReader.getNumImages(true) != 0) {
@@ -408,7 +421,54 @@ public class AwtRenderingBackend implements RenderingBackend {
             try {
                 graphics2D_.setTransform(transformation_);
                 graphics2D_.setColor(fillColor_);
-                graphics2D_.drawImage(img, dxI, dyI, image_.getWidth(), image_.getHeight(), null);
+
+                final int sx2;
+                if (sWidth == null) {
+                    sx2 = sx + img.getWidth();
+                }
+                else {
+                    sx2 = sx + sWidth;
+                }
+
+                final int sy2;
+                if (sHeight == null) {
+                    sy2 = sy + img.getHeight();
+                }
+                else {
+                    sy2 = sy + sHeight;
+                }
+
+                int dx1 = dx;
+                final int dx2;
+                if (dWidth == null) {
+                    dx2 = dx + img.getWidth();
+                }
+                else {
+                    if (dWidth < 0) {
+                        dx1 = dx1 + dWidth;
+                        dx2 = dx1 - dWidth;
+                    }
+                    else {
+                        dx2 = dx1 + dWidth;
+                    }
+                }
+
+                int dy1 = dy;
+                final int dy2;
+                if (dHeight == null) {
+                    dy2 = dy + img.getHeight();
+                }
+                else {
+                    if (dHeight < 0) {
+                        dy1 = dy1 + dHeight;
+                        dy2 = dy1 - dHeight;
+                    }
+                    else {
+                        dy2 = dy1 + dHeight;
+                    }
+                }
+
+                graphics2D_.drawImage(img, dx1, dy1, dx2, dy2, sx, sy, sx2, sy2, null);
             }
             finally {
                 graphics2D_.setTransform(savedTransform);

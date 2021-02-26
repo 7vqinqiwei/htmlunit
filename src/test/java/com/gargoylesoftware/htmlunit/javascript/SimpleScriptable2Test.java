@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -334,7 +334,7 @@ public class SimpleScriptable2Test extends WebDriverTestCase {
     @Test
     @Alerts(DEFAULT = {"function", "true", "function length() {\n    [native code]\n}", "0", "0"},
             CHROME = {"function", "true", "function get length() { [native code] }", "0", "0"},
-            EDGE = {"undefined", "false", "undefined", "exception"},
+            EDGE = {"function", "true", "function get length() { [native code] }", "0", "0"},
             IE = {"function", "true", "\nfunction length() {\n    [native code]\n}\n", "0", "0"})
     @HtmlUnitNYI(CHROME = {"function", "true", "function length() { [native code] }", "0", "0"},
             EDGE = {"function", "true", "function length() { [native code] }", "0", "0"})

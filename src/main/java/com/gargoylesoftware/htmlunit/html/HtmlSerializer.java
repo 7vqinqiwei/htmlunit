@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.SgmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSerializer.HtmlSerializerTextBuilder.Mode;
+import com.gargoylesoftware.htmlunit.html.serializer.HtmlSerializerNormalizedText;
 import com.gargoylesoftware.htmlunit.javascript.host.Element;
 
 /**
@@ -31,7 +32,10 @@ import com.gargoylesoftware.htmlunit.javascript.host.Element;
  * @author Ahmed Ashour
  * @author Ronald Brill
  * @author Rob Kodey
+ *
+ * @deprecated as of version 2.48.0; use {@link HtmlSerializerNormalizedText} instead
  */
+@Deprecated
 public class HtmlSerializer {
 
     private boolean ignoreMaskedElements_ = true;

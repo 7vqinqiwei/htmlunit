@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -75,7 +75,7 @@ public enum BrowserVersionFeatures {
     CSS_DISPLAY_BLOCK2,
 
     /** {@code CSSFontFaceRule.cssText} has no {@code \n}. */
-    @BrowserFeature({CHROME, EDGE})
+    @BrowserFeature({CHROME, EDGE, FF})
     CSS_FONTFACERULE_CSSTEXT_CHROME_STYLE,
 
     /** {@code CSSFontFaceRule.cssText} uses {@code \n\t} to break lines. */
@@ -302,6 +302,10 @@ public enum BrowserVersionFeatures {
     @BrowserFeature(IE)
     FORM_SUBMISSION_URL_WITHOUT_HASH,
 
+    /** If the frame src has 'about:' scheme use always 'about:blank' as source. */
+    @BrowserFeature({FF, FF78, IE})
+    FRAME_LOCATION_ABOUT_BLANK_FOR_ABOUT_SCHEME,
+
     /** */
     @BrowserFeature(IE)
     HTMLABBREVIATED,
@@ -361,6 +365,10 @@ public enum BrowserVersionFeatures {
     /** Do document.bgColor/.alinkColor/.vlinkColor/.linkColor have value by default. */
     @BrowserFeature(IE)
     HTMLDOCUMENT_COLOR,
+
+    /** Calling cookies setter with blank string does not reset the cookies. */
+    @BrowserFeature({CHROME, EDGE})
+    HTMLDOCUMENT_COOKIES_IGNORE_BLANK,
 
     /**
     /** {@code document.getElementsByName} returns an empty list if called with the empty string.
@@ -639,7 +647,7 @@ public enum BrowserVersionFeatures {
     JS_BLOB_CONTENT_TYPE_CASE_SENSITIVE,
 
     /** BlobEvent ctor requires a data value. */
-    @BrowserFeature({CHROME, EDGE})
+    @BrowserFeature({CHROME, EDGE, FF})
     JS_BLOB_EVENT_REQUIRES_DATA,
 
     /** Body {@code margin} is 8px. */
@@ -697,10 +705,6 @@ public enum BrowserVersionFeatures {
     /** {@link DateTimeFormat} uses the Unicode Character {@code 'LEFT-TO-RIGHT MARK'}. */
     @BrowserFeature(IE)
     JS_DATE_WITH_LEFT_TO_RIGHT_MARK,
-
-    /** */
-    @BrowserFeature(IE)
-    JS_DEFERRED,
 
     /** Javascript doctyp.entities returns null (FF10). */
     @BrowserFeature(IE)
@@ -894,6 +898,14 @@ public enum BrowserVersionFeatures {
     @BrowserFeature({FF, FF78})
     JS_EVENT_DISTINGUISH_PRINTABLE_KEY,
 
+    /** Javascript InputEvent reads the inputType property from data. */
+    @BrowserFeature({FF, FF78})
+    JS_EVENT_INPUT_CTOR_INPUTTYPE,
+
+    /** Javascript KeyboardEvent reads the which property from data. */
+    @BrowserFeature({FF, FF78, IE})
+    JS_EVENT_KEYBOARD_CTOR_WHICH,
+
     /** do not trigger the onload event if the frame content
      * was not shown because of the csp. */
     @BrowserFeature({FF, FF78})
@@ -1045,7 +1057,7 @@ public enum BrowserVersionFeatures {
     JS_INPUT_SET_VALUE_URL_TRIMMED,
 
     /** Intl is named Object. */
-    @BrowserFeature({FF, FF78, IE})
+    @BrowserFeature({FF78, IE})
     JS_INTL_NAMED_OBJECT,
 
     /** Indicates that Intl.v8BreakIterator is supported. */

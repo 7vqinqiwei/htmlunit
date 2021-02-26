@@ -1,10 +1,10 @@
 /*
- * Copyright (c) 2002-2020 Gargoyle Software Inc.
+ * Copyright (c) 2002-2021 Gargoyle Software Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -318,8 +318,7 @@ final class HtmlUnitNekoDOMBuilder extends AbstractSAXParser
 
         // add a head if none was there
         else if (headParsed_ == HeadParsed.NO && ("body".equals(tagLower) || "frameset".equals(tagLower))) {
-            final ElementFactory factory =
-                    htmlParser_.getElementFactory(page_, namespaceURI, "head", insideSvg_, false);
+            final ElementFactory factory = htmlParser_.getElementFactory(page_, null, "head", insideSvg_, false);
             final DomElement newElement = factory.createElement(page_, "head", null);
             currentNode_.appendChild(newElement);
             headParsed_ = HeadParsed.SYNTHESIZED;
